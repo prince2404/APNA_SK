@@ -15,6 +15,6 @@ CREATE TABLE notifications (
     created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_notifications_user_id  (user_id),
-    INDEX idx_notifications_is_read  (user_id, is_read),
+    INDEX idx_notifications_unread   (user_id, is_read, created_at),
     INDEX idx_notifications_created  (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -17,9 +17,9 @@ import com.ask.service.ProfileService;
 import com.ask.util.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -39,7 +40,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProfileServiceImpl implements ProfileService {
 
-    private static final String UPLOAD_DIR = "uploads";
+    /**
+     * Allowed file extensions mapped from content-type.
+     * Only these extensions are ever written to disk — never taken from user input.
+     */
+    private static final Map<String, String> CONTENT_TYPE_TO_EXTENSION = Map.of(
+            "image/jpeg", ".jpg",
+            "image/png", ".png",
+            "image/webp", ".webp",
+            "application/pdf", ".pdf"
+    );
+
+    @Value("${ask.upload.dir:uploads}")
+    private String uploadDir;
 
     private final UserRepository userRepository;
     private final UserPermissionRepository userPermissionRepository;
@@ -193,25 +206,33 @@ public class ProfileServiceImpl implements ProfileService {
 
     /**
      * Stores an uploaded file on the local filesystem and returns the relative path.
+     * The file name is always a random UUID with an extension derived from the
+     * validated content-type — never from user-supplied input — to prevent path injection.
      * In production this should be replaced with cloud storage (S3, GCS, etc.).
      */
     private String storeFile(MultipartFile file, String subDir) {
         try {
-            String originalName = StringUtils.cleanPath(
-                    file.getOriginalFilename() != null ? file.getOriginalFilename() : "file");
-            String extension = "";
-            int dotIndex = originalName.lastIndexOf('.');
-            if (dotIndex >= 0) {
-                extension = originalName.substring(dotIndex);
-            }
+            // Derive extension exclusively from the validated content-type, NOT from user input
+            String contentType = file.getContentType();
+            String extension = CONTENT_TYPE_TO_EXTENSION.getOrDefault(
+                    contentType != null ? contentType.toLowerCase(Locale.ROOT) : "", "");
+
             String storedName = UUID.randomUUID() + extension;
-            Path uploadPath = Paths.get(UPLOAD_DIR, subDir);
+
+            Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path uploadPath = baseDir.resolve(subDir);
             Files.createDirectories(uploadPath);
-            Path filePath = uploadPath.resolve(storedName);
+
+            // Resolve and verify the final path is still within the expected directory
+            Path filePath = uploadPath.resolve(storedName).normalize();
+            if (!filePath.startsWith(uploadPath)) {
+                throw new InvalidRequestException("Invalid file path");
+            }
+
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             return subDir + "/" + storedName;
         } catch (IOException e) {
-            log.error("Failed to store file: {}", e.getMessage());
+            log.error("Failed to store uploaded file");
             throw new RuntimeException("Failed to store uploaded file", e);
         }
     }
