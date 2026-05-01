@@ -1,7 +1,6 @@
 package com.ask.controller;
 
 import com.ask.constants.ApiPaths;
-import com.ask.constants.AppConstants;
 import com.ask.dto.request.geography.*;
 import com.ask.dto.response.common.ApiResponse;
 import com.ask.dto.response.common.PageResponse;
@@ -14,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * Controller for managing the geographic hierarchy (States, Districts, Blocks, Stores).
@@ -33,7 +30,7 @@ public class GeographyController {
 
     /** POST /api/v1/states — Create a new state. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PostMapping(ApiPaths.STATES)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<StateResponse>> createState(
             @Valid @RequestBody StateRequest request) {
         StateResponse response = geographyService.createState(request);
@@ -43,6 +40,7 @@ public class GeographyController {
 
     /** GET /api/v1/states/{id} — Get state by ID. Accessible by: All authenticated users */
     @GetMapping(ApiPaths.STATES + "/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<StateResponse>> getState(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getStateById(id), ApiPaths.STATES + "/" + id));
@@ -50,6 +48,7 @@ public class GeographyController {
 
     /** GET /api/v1/states — Get all states (paginated). Accessible by: All authenticated users */
     @GetMapping(ApiPaths.STATES)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<PageResponse<StateResponse>>> getAllStates(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -59,14 +58,17 @@ public class GeographyController {
 
     /** GET /api/v1/states/active — Get all active states (dropdown). Accessible by: All authenticated */
     @GetMapping(ApiPaths.STATES + "/active")
-    public ResponseEntity<ApiResponse<List<StateResponse>>> getActiveStates() {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
+    public ResponseEntity<ApiResponse<PageResponse<StateResponse>>> getActiveStates(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(
-                geographyService.getAllActiveStates(), ApiPaths.STATES + "/active"));
+                geographyService.getAllActiveStates(page, size), ApiPaths.STATES + "/active"));
     }
 
     /** PUT /api/v1/states/{id} — Update state. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PutMapping(ApiPaths.STATES + "/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<StateResponse>> updateState(
             @PathVariable Long id, @Valid @RequestBody StateRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -85,7 +87,7 @@ public class GeographyController {
 
     /** POST /api/v1/districts — Create district. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PostMapping(ApiPaths.DISTRICTS)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<DistrictResponse>> createDistrict(
             @Valid @RequestBody DistrictRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
@@ -94,6 +96,7 @@ public class GeographyController {
 
     /** GET /api/v1/districts/{id} — Get district by ID. Accessible by: All authenticated */
     @GetMapping(ApiPaths.DISTRICTS + "/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<DistrictResponse>> getDistrict(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getDistrictById(id), ApiPaths.DISTRICTS + "/" + id));
@@ -101,6 +104,7 @@ public class GeographyController {
 
     /** GET /api/v1/districts?stateId=1 — Get districts by state (paginated). Accessible by: All */
     @GetMapping(ApiPaths.DISTRICTS)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<PageResponse<DistrictResponse>>> getDistrictsByState(
             @RequestParam Long stateId,
             @RequestParam(defaultValue = "0") int page,
@@ -111,15 +115,18 @@ public class GeographyController {
 
     /** GET /api/v1/districts/active?stateId=1 — Active districts for dropdown. Accessible by: All */
     @GetMapping(ApiPaths.DISTRICTS + "/active")
-    public ResponseEntity<ApiResponse<List<DistrictResponse>>> getActiveDistricts(
-            @RequestParam Long stateId) {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
+    public ResponseEntity<ApiResponse<PageResponse<DistrictResponse>>> getActiveDistricts(
+            @RequestParam Long stateId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(
-                geographyService.getActiveDistrictsByState(stateId), ApiPaths.DISTRICTS + "/active"));
+                geographyService.getActiveDistrictsByState(stateId, page, size), ApiPaths.DISTRICTS + "/active"));
     }
 
     /** PUT /api/v1/districts/{id} — Update district. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PutMapping(ApiPaths.DISTRICTS + "/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<DistrictResponse>> updateDistrict(
             @PathVariable Long id, @Valid @RequestBody DistrictRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -138,7 +145,7 @@ public class GeographyController {
 
     /** POST /api/v1/blocks — Create block. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PostMapping(ApiPaths.BLOCKS)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<BlockResponse>> createBlock(
             @Valid @RequestBody BlockRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
@@ -147,6 +154,7 @@ public class GeographyController {
 
     /** GET /api/v1/blocks/{id} — Get block by ID. Accessible by: All authenticated */
     @GetMapping(ApiPaths.BLOCKS + "/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<BlockResponse>> getBlock(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getBlockById(id), ApiPaths.BLOCKS + "/" + id));
@@ -154,6 +162,7 @@ public class GeographyController {
 
     /** GET /api/v1/blocks?districtId=1 — Get blocks by district. Accessible by: All */
     @GetMapping(ApiPaths.BLOCKS)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<PageResponse<BlockResponse>>> getBlocksByDistrict(
             @RequestParam Long districtId,
             @RequestParam(defaultValue = "0") int page,
@@ -164,15 +173,18 @@ public class GeographyController {
 
     /** GET /api/v1/blocks/active?districtId=1 — Active blocks for dropdown. Accessible by: All */
     @GetMapping(ApiPaths.BLOCKS + "/active")
-    public ResponseEntity<ApiResponse<List<BlockResponse>>> getActiveBlocks(
-            @RequestParam Long districtId) {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
+    public ResponseEntity<ApiResponse<PageResponse<BlockResponse>>> getActiveBlocks(
+            @RequestParam Long districtId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(
-                geographyService.getActiveBlocksByDistrict(districtId), ApiPaths.BLOCKS + "/active"));
+                geographyService.getActiveBlocksByDistrict(districtId, page, size), ApiPaths.BLOCKS + "/active"));
     }
 
     /** PUT /api/v1/blocks/{id} — Update block. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PutMapping(ApiPaths.BLOCKS + "/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<BlockResponse>> updateBlock(
             @PathVariable Long id, @Valid @RequestBody BlockRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -191,7 +203,7 @@ public class GeographyController {
 
     /** POST /api/v1/stores — Create store. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PostMapping(ApiPaths.STORES)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<StoreResponse>> createStore(
             @Valid @RequestBody StoreRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
@@ -200,6 +212,7 @@ public class GeographyController {
 
     /** GET /api/v1/stores/{id} — Get store by ID. Accessible by: All authenticated */
     @GetMapping(ApiPaths.STORES + "/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<StoreResponse>> getStore(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getStoreById(id), ApiPaths.STORES + "/" + id));
@@ -207,6 +220,7 @@ public class GeographyController {
 
     /** GET /api/v1/stores?blockId=1 — Get stores by block. Accessible by: All */
     @GetMapping(ApiPaths.STORES)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<PageResponse<StoreResponse>>> getStoresByBlock(
             @RequestParam Long blockId,
             @RequestParam(defaultValue = "0") int page,
@@ -217,7 +231,7 @@ public class GeographyController {
 
     /** PUT /api/v1/stores/{id} — Update store. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */
     @PutMapping(ApiPaths.STORES + "/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<StoreResponse>> updateStore(
             @PathVariable Long id, @Valid @RequestBody StoreRequest request) {
         return ResponseEntity.ok(ApiResponse.success(

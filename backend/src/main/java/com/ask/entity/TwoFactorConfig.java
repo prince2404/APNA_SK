@@ -40,6 +40,12 @@ public class TwoFactorConfig {
     @Column(name = "otp_expires_at")
     private LocalDateTime otpExpiresAt;
 
+    @Column(name = "pending_login_token_hash")
+    private String pendingLoginTokenHash;
+
+    @Column(name = "pending_login_expires_at")
+    private LocalDateTime pendingLoginExpiresAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -56,5 +62,15 @@ public class TwoFactorConfig {
         return otpCode != null
                 && otpExpiresAt != null
                 && LocalDateTime.now().isBefore(otpExpiresAt);
+    }
+
+    /**
+     * Checks if a password-authenticated 2FA login challenge is still valid.
+     * @return true if the pending challenge exists and has not expired
+     */
+    public boolean isPendingLoginValid() {
+        return pendingLoginTokenHash != null
+                && pendingLoginExpiresAt != null
+                && LocalDateTime.now().isBefore(pendingLoginExpiresAt);
     }
 }

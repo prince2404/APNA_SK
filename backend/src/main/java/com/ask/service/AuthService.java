@@ -34,7 +34,7 @@ public interface AuthService {
      *
      * @param email the user's email
      */
-    void resendOtp(String email);
+    void resendOtp(ResendOtpRequest request);
 
     /**
      * Refreshes the access token using a valid refresh token.
@@ -49,7 +49,7 @@ public interface AuthService {
      *
      * @param refreshToken the refresh token to invalidate
      */
-    void logout(String refreshToken);
+    void logout(String refreshToken, String email);
 
     /**
      * Changes the user's password. Used for both forced change and voluntary change.

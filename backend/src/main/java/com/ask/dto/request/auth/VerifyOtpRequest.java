@@ -17,4 +17,7 @@ public class VerifyOtpRequest {
 
     @NotBlank(message = "OTP is required")
     private String otp;
+
+    @NotBlank(message = "2FA challenge token is required")
+    private String challengeToken;
 }

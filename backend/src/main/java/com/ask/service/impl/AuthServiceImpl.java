@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -103,12 +104,14 @@ public class AuthServiceImpl implements AuthService {
             var twoFactorConfig = twoFactorConfigRepository.findByUserId(user.getId());
             if (twoFactorConfig.isPresent() && (twoFactorConfig.get().getIsEnabled() || twoFactorConfig.get().getIsMandatory())) {
                 // Generate and send OTP, return partial response
+                String challengeToken = createPendingLoginChallenge(twoFactorConfig.get());
                 generateAndSendOtp(user, twoFactorConfig.get());
                 auditService.log(user, "LOGIN_2FA_PENDING", ipAddress, "Login successful, awaiting 2FA OTP");
 
                 return LoginResponse.builder()
                         .requiresTwoFactor(true)
                         .requiresPasswordChange(user.getForcePasswordChange())
+                        .twoFactorChallengeToken(challengeToken)
                         .user(buildUserProfile(user))
                         .build();
             }
@@ -127,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
             }
 
             // Step 9: Full login — generate tokens and create session
-            return completeLogin(user, authentication, ipAddress, userAgent);
+            return completeLogin(user, ipAddress, userAgent);
 
         } catch (BadCredentialsException e) {
             // Increment failed attempts
@@ -145,8 +148,14 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
 
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new InvalidRequestException(ErrorMessages.ACCOUNT_INACTIVE);
+        }
+
         TwoFactorConfig config = twoFactorConfigRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new InvalidRequestException("2FA is not configured for this user"));
+
+        validatePendingLoginChallenge(config, request.getChallengeToken());
 
         // Validate OTP
         if (!config.isOtpValid()) {
@@ -160,11 +169,9 @@ public class AuthServiceImpl implements AuthService {
         // Clear OTP after successful verification
         config.setOtpCode(null);
         config.setOtpExpiresAt(null);
+        config.setPendingLoginTokenHash(null);
+        config.setPendingLoginExpiresAt(null);
         twoFactorConfigRepository.save(config);
-
-        // Create authentication manually (user already passed password check)
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getEmail(), null, List.of());
 
         auditService.log(user, "LOGIN_2FA_VERIFIED", ipAddress, "2FA OTP verified successfully");
 
@@ -180,7 +187,7 @@ public class AuthServiceImpl implements AuthService {
                     .build();
         }
 
-        return completeLogin(user, authentication, ipAddress, userAgent);
+        return completeLogin(user, ipAddress, userAgent);
     }
 
     /**
@@ -188,13 +195,18 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public void resendOtp(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+    public void resendOtp(ResendOtpRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new InvalidRequestException(ErrorMessages.ACCOUNT_INACTIVE);
+        }
 
         TwoFactorConfig config = twoFactorConfigRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new InvalidRequestException("2FA is not configured for this user"));
 
+        validatePendingLoginChallenge(config, request.getChallengeToken());
         generateAndSendOtp(user, config);
     }
 
@@ -207,8 +219,11 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new InvalidRequestException(ErrorMessages.REFRESH_TOKEN_INVALID));
 
-        if (refreshToken.isExpired()) {
-            refreshTokenRepository.delete(refreshToken);
+        if (refreshToken.getIsRevoked() || refreshToken.isExpired()) {
+            if (refreshToken.isExpired() && !refreshToken.getIsRevoked()) {
+                refreshToken.revoke();
+                refreshTokenRepository.save(refreshToken);
+            }
             throw new InvalidRequestException(ErrorMessages.REFRESH_TOKEN_INVALID);
         }
 
@@ -223,6 +238,9 @@ public class AuthServiceImpl implements AuthService {
         });
 
         User user = refreshToken.getUser();
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new InvalidRequestException(ErrorMessages.ACCOUNT_INACTIVE);
+        }
         String newAccessToken = jwtTokenProvider.generateAccessTokenFromEmail(user.getEmail());
 
         return LoginResponse.builder()
@@ -240,15 +258,19 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public void logout(String refreshToken) {
+    public void logout(String refreshToken, String email) {
         refreshTokenRepository.findByToken(refreshToken).ifPresent(token -> {
+            if (!token.getUser().getEmail().equals(email)) {
+                throw new InvalidRequestException(ErrorMessages.REFRESH_TOKEN_INVALID);
+            }
             // Revoke the corresponding session
             String fingerprint = EncryptionUtil.sha256Hash(refreshToken);
             userSessionRepository.findByTokenFingerprint(fingerprint).ifPresent(session -> {
                 session.setIsRevoked(true);
                 userSessionRepository.save(session);
             });
-            refreshTokenRepository.delete(token);
+            token.revoke();
+            refreshTokenRepository.save(token);
         });
     }
 
@@ -290,8 +312,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * Completes the login flow by generating tokens and creating a session.
      */
-    private LoginResponse completeLogin(User user, Authentication authentication,
-                                         String ipAddress, String userAgent) {
+    private LoginResponse completeLogin(User user, String ipAddress, String userAgent) {
         String accessToken = jwtTokenProvider.generateAccessTokenFromEmail(user.getEmail());
         String refreshTokenStr = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
@@ -370,6 +391,32 @@ public class AuthServiceImpl implements AuthService {
             otp.append(random.nextInt(10));
         }
         return otp.toString();
+    }
+
+    /**
+     * Creates a short-lived challenge proving the password step was completed.
+     */
+    private String createPendingLoginChallenge(TwoFactorConfig config) {
+        byte[] randomBytes = new byte[32];
+        new SecureRandom().nextBytes(randomBytes);
+        String challengeToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        config.setPendingLoginTokenHash(EncryptionUtil.sha256Hash(challengeToken));
+        config.setPendingLoginExpiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes));
+        twoFactorConfigRepository.save(config);
+        return challengeToken;
+    }
+
+    /**
+     * Validates the pending-login challenge before allowing OTP operations.
+     */
+    private void validatePendingLoginChallenge(TwoFactorConfig config, String challengeToken) {
+        if (!config.isPendingLoginValid()) {
+            throw new InvalidRequestException(ErrorMessages.OTP_EXPIRED);
+        }
+        String providedHash = EncryptionUtil.sha256Hash(challengeToken);
+        if (!providedHash.equals(config.getPendingLoginTokenHash())) {
+            throw new InvalidRequestException(ErrorMessages.OTP_INVALID);
+        }
     }
 
     /**

@@ -20,6 +20,7 @@ public class LoginResponse {
     private UserProfile user;
     private boolean requiresTwoFactor;
     private boolean requiresPasswordChange;
+    private String twoFactorChallengeToken;
 
     /**
      * Embedded user profile in the login response.

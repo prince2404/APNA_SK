@@ -68,7 +68,7 @@ CREATE TABLE refresh_tokens (
     token VARCHAR(500) NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_refresh_tokens_user_id (user_id),
     INDEX idx_refresh_tokens_token (token),
     INDEX idx_refresh_tokens_expires_at (expires_at)
@@ -85,7 +85,7 @@ CREATE TABLE user_sessions (
     expires_at TIMESTAMP NOT NULL,
     is_revoked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_sessions_user FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_user_sessions_user_id (user_id),
     INDEX idx_user_sessions_fingerprint (token_fingerprint),
     INDEX idx_user_sessions_revoked (is_revoked)
@@ -101,6 +101,6 @@ CREATE TABLE two_factor_config (
     otp_expires_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_two_factor_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_two_factor_user FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_two_factor_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

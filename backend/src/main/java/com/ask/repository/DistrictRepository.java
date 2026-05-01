@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for District entity operations.
@@ -14,6 +15,10 @@ import java.util.List;
 public interface DistrictRepository extends JpaRepository<District, Long> {
 
     Page<District> findByStateIdAndStatus(Long stateId, EntityStatus status, Pageable pageable);
+
+    Optional<District> findByIdAndStateId(Long id, Long stateId);
+
+    Page<District> findByIdAndStatus(Long id, EntityStatus status, Pageable pageable);
 
     List<District> findByStateIdAndStatusOrderByNameAsc(Long stateId, EntityStatus status);
 

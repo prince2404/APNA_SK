@@ -15,7 +15,7 @@ public interface GeographyService {
     StateResponse createState(StateRequest request);
     StateResponse getStateById(Long id);
     PageResponse<StateResponse> getAllStates(int page, int size);
-    List<StateResponse> getAllActiveStates();
+    PageResponse<StateResponse> getAllActiveStates(int page, int size);
     StateResponse updateState(Long id, StateRequest request);
     void toggleStateStatus(Long id);
 
@@ -23,7 +23,7 @@ public interface GeographyService {
     DistrictResponse createDistrict(DistrictRequest request);
     DistrictResponse getDistrictById(Long id);
     PageResponse<DistrictResponse> getDistrictsByState(Long stateId, int page, int size);
-    List<DistrictResponse> getActiveDistrictsByState(Long stateId);
+    PageResponse<DistrictResponse> getActiveDistrictsByState(Long stateId, int page, int size);
     DistrictResponse updateDistrict(Long id, DistrictRequest request);
     void toggleDistrictStatus(Long id);
 
@@ -31,7 +31,7 @@ public interface GeographyService {
     BlockResponse createBlock(BlockRequest request);
     BlockResponse getBlockById(Long id);
     PageResponse<BlockResponse> getBlocksByDistrict(Long districtId, int page, int size);
-    List<BlockResponse> getActiveBlocksByDistrict(Long districtId);
+    PageResponse<BlockResponse> getActiveBlocksByDistrict(Long districtId, int page, int size);
     BlockResponse updateBlock(Long id, BlockRequest request);
     void toggleBlockStatus(Long id);
 

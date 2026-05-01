@@ -85,8 +85,9 @@ public class AuthController {
      * Accessible by: Users with pending 2FA verification
      */
     @PostMapping(ApiPaths.AUTH_RESEND_OTP)
-    public ResponseEntity<ApiResponse<Void>> resendOtp(@RequestParam String email) {
-        authService.resendOtp(email);
+    public ResponseEntity<ApiResponse<Void>> resendOtp(
+            @Valid @RequestBody ResendOtpRequest request) {
+        authService.resendOtp(request);
         return ResponseEntity.ok(ApiResponse.success(null, "OTP resent to your email",
                 ApiPaths.AUTH + ApiPaths.AUTH_RESEND_OTP));
     }
@@ -111,8 +112,9 @@ public class AuthController {
      */
     @PostMapping(ApiPaths.AUTH_LOGOUT)
     public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody RefreshTokenRequest request) {
-        authService.logout(request.getRefreshToken());
+        authService.logout(request.getRefreshToken(), userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully",
                 ApiPaths.AUTH + ApiPaths.AUTH_LOGOUT));
     }

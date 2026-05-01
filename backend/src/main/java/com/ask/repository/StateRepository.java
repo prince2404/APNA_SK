@@ -20,6 +20,8 @@ public interface StateRepository extends JpaRepository<State, Long> {
 
     boolean existsByNameIgnoreCase(String name);
 
+    Page<State> findByIdAndStatus(Long id, EntityStatus status, Pageable pageable);
+
     Page<State> findByStatus(EntityStatus status, Pageable pageable);
 
     List<State> findByStatusOrderByNameAsc(EntityStatus status);

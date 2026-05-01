@@ -16,8 +16,6 @@ public interface UserPermissionRepository extends JpaRepository<UserPermission, 
 
     boolean existsByUserIdAndPermissionId(Long userId, Long permissionId);
 
-    void deleteByUserIdAndPermissionId(Long userId, Long permissionId);
-
     /** Get all permissions for a user as module:action strings */
     @Query("SELECT CONCAT(up.permission.module, ':', up.permission.action) FROM UserPermission up WHERE up.user.id = :userId")
     List<String> findPermissionStringsByUserId(@Param("userId") Long userId);

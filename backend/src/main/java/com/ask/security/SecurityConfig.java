@@ -58,7 +58,11 @@ public class SecurityConfig {
                 // Configure endpoint access rules
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints — no authentication needed
-                        .requestMatchers(ApiPaths.AUTH + "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                ApiPaths.AUTH + ApiPaths.AUTH_LOGIN,
+                                ApiPaths.AUTH + ApiPaths.AUTH_VERIFY_OTP,
+                                ApiPaths.AUTH + ApiPaths.AUTH_RESEND_OTP,
+                                ApiPaths.AUTH + ApiPaths.AUTH_REFRESH).permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

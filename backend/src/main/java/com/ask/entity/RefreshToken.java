@@ -29,6 +29,13 @@ public class RefreshToken {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
+    @Column(name = "is_revoked", nullable = false)
+    @Builder.Default
+    private Boolean isRevoked = false;
+
+    @Column(name = "revoked_at")
+    private LocalDateTime revokedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -39,5 +46,13 @@ public class RefreshToken {
      */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
+    }
+
+    /**
+     * Marks the refresh token as revoked without deleting the record.
+     */
+    public void revoke() {
+        this.isRevoked = true;
+        this.revokedAt = LocalDateTime.now();
     }
 }
