@@ -24,5 +24,7 @@ public interface DistrictRepository extends JpaRepository<District, Long> {
 
     boolean existsByNameIgnoreCaseAndStateId(String name, Long stateId);
 
+    boolean existsByNameIgnoreCaseAndStateIdAndIdNot(String name, Long stateId, Long id);
+
     Page<District> findByStatus(EntityStatus status, Pageable pageable);
 }

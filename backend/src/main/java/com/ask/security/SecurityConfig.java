@@ -40,6 +40,7 @@ import java.util.Map;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthRateLimitFilter authRateLimitFilter;
 
     /**
      * Configures the security filter chain.
@@ -103,6 +104,9 @@ public class SecurityConfig {
                             mapper.writeValue(response.getOutputStream(), body);
                         })
                 )
+
+                // Apply public auth endpoint rate limiting before JWT authentication
+                .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // Add JWT filter before Spring Security's default authentication filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

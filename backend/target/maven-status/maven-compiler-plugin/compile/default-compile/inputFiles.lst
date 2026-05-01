@@ -8,6 +8,7 @@ C:\APNA_SK\backend\src\main\java\com\ask\constants\RoleConstants.java
 C:\APNA_SK\backend\src\main\java\com\ask\controller\AuthController.java
 C:\APNA_SK\backend\src\main\java\com\ask\controller\GeographyController.java
 C:\APNA_SK\backend\src\main\java\com\ask\controller\SessionController.java
+C:\APNA_SK\backend\src\main\java\com\ask\controller\UserController.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\request\auth\ChangePasswordRequest.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\request\auth\LoginRequest.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\request\auth\RefreshTokenRequest.java
@@ -17,6 +18,9 @@ C:\APNA_SK\backend\src\main\java\com\ask\dto\request\geography\BlockRequest.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\request\geography\DistrictRequest.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\request\geography\StateRequest.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\request\geography\StoreRequest.java
+C:\APNA_SK\backend\src\main\java\com\ask\dto\request\user\PermissionAssignmentRequest.java
+C:\APNA_SK\backend\src\main\java\com\ask\dto\request\user\UserCreateRequest.java
+C:\APNA_SK\backend\src\main\java\com\ask\dto\request\user\UserUpdateRequest.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\response\auth\LoginResponse.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\response\auth\UserSessionResponse.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\response\common\ApiResponse.java
@@ -25,6 +29,8 @@ C:\APNA_SK\backend\src\main\java\com\ask\dto\response\geography\BlockResponse.ja
 C:\APNA_SK\backend\src\main\java\com\ask\dto\response\geography\DistrictResponse.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\response\geography\StateResponse.java
 C:\APNA_SK\backend\src\main\java\com\ask\dto\response\geography\StoreResponse.java
+C:\APNA_SK\backend\src\main\java\com\ask\dto\response\user\PermissionResponse.java
+C:\APNA_SK\backend\src\main\java\com\ask\dto\response\user\UserResponse.java
 C:\APNA_SK\backend\src\main\java\com\ask\entity\AuditLog.java
 C:\APNA_SK\backend\src\main\java\com\ask\entity\Block.java
 C:\APNA_SK\backend\src\main\java\com\ask\entity\District.java
@@ -52,6 +58,7 @@ C:\APNA_SK\backend\src\main\java\com\ask\exception\GlobalExceptionHandler.java
 C:\APNA_SK\backend\src\main\java\com\ask\exception\InvalidRequestException.java
 C:\APNA_SK\backend\src\main\java\com\ask\exception\ResourceNotFoundException.java
 C:\APNA_SK\backend\src\main\java\com\ask\mapper\GeographyMapper.java
+C:\APNA_SK\backend\src\main\java\com\ask\mapper\UserMapper.java
 C:\APNA_SK\backend\src\main\java\com\ask\repository\AuditLogRepository.java
 C:\APNA_SK\backend\src\main\java\com\ask\repository\BlockRepository.java
 C:\APNA_SK\backend\src\main\java\com\ask\repository\DistrictRepository.java
@@ -65,6 +72,7 @@ C:\APNA_SK\backend\src\main\java\com\ask\repository\TwoFactorConfigRepository.ja
 C:\APNA_SK\backend\src\main\java\com\ask\repository\UserPermissionRepository.java
 C:\APNA_SK\backend\src\main\java\com\ask\repository\UserRepository.java
 C:\APNA_SK\backend\src\main\java\com\ask\repository\UserSessionRepository.java
+C:\APNA_SK\backend\src\main\java\com\ask\security\AuthRateLimitFilter.java
 C:\APNA_SK\backend\src\main\java\com\ask\security\CustomUserDetailsService.java
 C:\APNA_SK\backend\src\main\java\com\ask\security\JwtAuthenticationFilter.java
 C:\APNA_SK\backend\src\main\java\com\ask\security\JwtTokenProvider.java
@@ -78,5 +86,7 @@ C:\APNA_SK\backend\src\main\java\com\ask\service\impl\AuthServiceImpl.java
 C:\APNA_SK\backend\src\main\java\com\ask\service\impl\EmailServiceImpl.java
 C:\APNA_SK\backend\src\main\java\com\ask\service\impl\GeographyServiceImpl.java
 C:\APNA_SK\backend\src\main\java\com\ask\service\impl\SessionServiceImpl.java
+C:\APNA_SK\backend\src\main\java\com\ask\service\impl\UserServiceImpl.java
 C:\APNA_SK\backend\src\main\java\com\ask\service\SessionService.java
+C:\APNA_SK\backend\src\main\java\com\ask\service\UserService.java
 C:\APNA_SK\backend\src\main\java\com\ask\util\EncryptionUtil.java

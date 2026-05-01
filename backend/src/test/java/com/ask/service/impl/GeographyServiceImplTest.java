@@ -2,9 +2,12 @@ package com.ask.service.impl;
 
 import com.ask.dto.request.geography.DistrictRequest;
 import com.ask.dto.response.geography.DistrictResponse;
+import com.ask.dto.response.geography.StateResponse;
+import com.ask.entity.Block;
 import com.ask.entity.District;
 import com.ask.entity.Role;
 import com.ask.entity.State;
+import com.ask.entity.Store;
 import com.ask.entity.User;
 import com.ask.exception.GeographicScopeException;
 import com.ask.mapper.GeographyMapper;
@@ -108,5 +111,30 @@ class GeographyServiceImplTest {
 
         verify(auditService).log(eq(superAdmin), eq("CREATE_DISTRICT"), eq("DISTRICT"),
                 eq(savedDistrict.getId()), eq(null), eq(null), eq(null), any());
+    }
+
+    @Test
+    void storeScopedUserCanReadOwnParentStateWithoutDirectStateAssignment() {
+        State bihar = State.builder().id(1L).name("Bihar").code("BR").build();
+        District patna = District.builder().id(2L).name("Patna").state(bihar).build();
+        Block block = Block.builder().id(3L).name("Phulwari").district(patna).build();
+        Store store = Store.builder().id(4L).name("ASK Patna").code("PAT01").block(block).build();
+        User receptionist = User.builder()
+                .id(11L)
+                .email("receptionist@askhealth.in")
+                .role(Role.builder().name("RECEPTIONIST").displayName("Receptionist").build())
+                .store(store)
+                .build();
+        SecurityContextHolder.getContext().setAuthentication(
+                new TestingAuthenticationToken(receptionist.getEmail(), null));
+
+        when(userRepository.findByEmail(receptionist.getEmail())).thenReturn(Optional.of(receptionist));
+        when(stateRepository.findById(bihar.getId())).thenReturn(Optional.of(bihar));
+        when(geographyMapper.toStateResponse(bihar)).thenReturn(
+                StateResponse.builder().id(bihar.getId()).name(bihar.getName()).code(bihar.getCode()).build());
+
+        geographyService.getStateById(bihar.getId());
+
+        verify(stateRepository).findById(bihar.getId());
     }
 }

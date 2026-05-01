@@ -18,6 +18,8 @@ public interface StateRepository extends JpaRepository<State, Long> {
 
     boolean existsByCode(String code);
 
+    boolean existsByCodeAndIdNot(String code, Long id);
+
     boolean existsByNameIgnoreCase(String name);
 
     Page<State> findByIdAndStatus(Long id, EntityStatus status, Pageable pageable);

@@ -101,8 +101,12 @@ public class GeographyServiceImpl implements GeographyService {
     public StateResponse updateState(Long id, StateRequest request) {
         User currentUser = getCurrentUser();
         State state = getStateInScope(id);
+        String code = request.getCode().toUpperCase();
+        if (stateRepository.existsByCodeAndIdNot(code, id)) {
+            throw new DuplicateResourceException("State already exists with code: " + request.getCode());
+        }
         state.setName(request.getName());
-        state.setCode(request.getCode().toUpperCase());
+        state.setCode(code);
         State saved = stateRepository.save(state);
         auditService.log(currentUser, "UPDATE_STATE", "STATE", saved.getId(), null, null, null,
                 "Updated state: " + saved.getName());
@@ -171,6 +175,9 @@ public class GeographyServiceImpl implements GeographyService {
         User currentUser = getCurrentUser();
         District district = getDistrictInScope(id);
         State state = getStateInScope(request.getStateId());
+        if (districtRepository.existsByNameIgnoreCaseAndStateIdAndIdNot(request.getName(), request.getStateId(), id)) {
+            throw new DuplicateResourceException("District already exists with this name in the state");
+        }
         district.setName(request.getName());
         district.setState(state);
         District saved = districtRepository.save(district);
@@ -241,6 +248,9 @@ public class GeographyServiceImpl implements GeographyService {
         User currentUser = getCurrentUser();
         Block block = getBlockInScope(id);
         District district = getDistrictInScope(request.getDistrictId());
+        if (blockRepository.existsByNameIgnoreCaseAndDistrictIdAndIdNot(request.getName(), request.getDistrictId(), id)) {
+            throw new DuplicateResourceException("Block already exists with this name in the district");
+        }
         block.setName(request.getName());
         block.setDistrict(district);
         Block saved = blockRepository.save(block);
@@ -356,10 +366,19 @@ public class GeographyServiceImpl implements GeographyService {
     }
 
     private Long requireStateId(User user) {
-        if (user.getState() == null) {
-            throw new GeographicScopeException();
+        if (user.getState() != null) {
+            return user.getState().getId();
         }
-        return user.getState().getId();
+        if (user.getDistrict() != null) {
+            return user.getDistrict().getState().getId();
+        }
+        if (user.getBlock() != null) {
+            return user.getBlock().getDistrict().getState().getId();
+        }
+        if (user.getStore() != null) {
+            return user.getStore().getBlock().getDistrict().getState().getId();
+        }
+        throw new GeographicScopeException();
     }
 
     private Long getScopedDistrictId(User user) {

@@ -29,5 +29,7 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
 
     boolean existsByNameIgnoreCaseAndDistrictId(String name, Long districtId);
 
+    boolean existsByNameIgnoreCaseAndDistrictIdAndIdNot(String name, Long districtId, Long id);
+
     Page<Block> findByStatus(EntityStatus status, Pageable pageable);
 }
