@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-05-01T16:25:09+0530",
-    comments = "version: 1.6.3, compiler: javac, environment: Java 24.0.1 (Oracle Corporation)"
+    date = "2026-05-01T18:11:50+0530",
+    comments = "version: 1.6.3, compiler: Eclipse JDT (IDE) 3.46.0.v20260407-0427, environment: Java 21.0.10 (Eclipse Adoptium)"
 )
 @Component
 public class UserMapperImpl implements UserMapper {
@@ -40,22 +40,22 @@ public class UserMapperImpl implements UserMapper {
         userResponse.blockName( userBlockName( user ) );
         userResponse.storeId( userStoreId( user ) );
         userResponse.storeName( userStoreName( user ) );
-        userResponse.id( user.getId() );
-        userResponse.fullName( user.getFullName() );
+        userResponse.aadhaarLastFour( user.getAadhaarLastFour() );
+        userResponse.address( user.getAddress() );
+        userResponse.createdAt( user.getCreatedAt() );
+        userResponse.dateOfBirth( user.getDateOfBirth() );
         userResponse.email( user.getEmail() );
+        userResponse.forcePasswordChange( user.getForcePasswordChange() );
+        userResponse.fullName( user.getFullName() );
+        userResponse.gender( user.getGender() );
+        userResponse.id( user.getId() );
+        userResponse.lastLoginAt( user.getLastLoginAt() );
+        userResponse.panNumber( user.getPanNumber() );
         userResponse.phone( user.getPhone() );
         userResponse.profilePhotoUrl( user.getProfilePhotoUrl() );
-        userResponse.dateOfBirth( user.getDateOfBirth() );
-        userResponse.gender( user.getGender() );
-        userResponse.address( user.getAddress() );
-        userResponse.aadhaarLastFour( user.getAadhaarLastFour() );
-        userResponse.panNumber( user.getPanNumber() );
-        userResponse.verificationStatus( user.getVerificationStatus() );
         userResponse.status( user.getStatus() );
-        userResponse.forcePasswordChange( user.getForcePasswordChange() );
-        userResponse.lastLoginAt( user.getLastLoginAt() );
-        userResponse.createdAt( user.getCreatedAt() );
         userResponse.updatedAt( user.getUpdatedAt() );
+        userResponse.verificationStatus( user.getVerificationStatus() );
 
         return userResponse.build();
     }
@@ -68,10 +68,10 @@ public class UserMapperImpl implements UserMapper {
 
         PermissionResponse.PermissionResponseBuilder permissionResponse = PermissionResponse.builder();
 
-        permissionResponse.id( permission.getId() );
-        permissionResponse.module( permission.getModule() );
         permissionResponse.action( permission.getAction() );
         permissionResponse.description( permission.getDescription() );
+        permissionResponse.id( permission.getId() );
+        permissionResponse.module( permission.getModule() );
 
         permissionResponse.code( permission.getModule() + ":" + permission.getAction() );
 
