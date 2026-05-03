@@ -32,4 +32,7 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
     boolean existsByNameIgnoreCaseAndDistrictIdAndIdNot(String name, Long districtId, Long id);
 
     Page<Block> findByStatus(EntityStatus status, Pageable pageable);
+
+    @Query("SELECT b FROM Block b JOIN b.district d WHERE d.state.id = :stateId")
+    Page<Block> findByStateId(@Param("stateId") Long stateId, Pageable pageable);
 }

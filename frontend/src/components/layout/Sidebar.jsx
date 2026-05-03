@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, MapPin, Building2, Store, ShieldCheck,
   Package, Warehouse, Receipt, PieChart, Bell, MessageSquare,
-  Settings, ChevronLeft, ChevronRight, Heart, X,
+  Settings, ChevronLeft, ChevronRight, Heart, X, BarChart3,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useSidebarStore } from '@/store/useSidebarStore';
@@ -31,6 +31,7 @@ const menuSections = [
   {
     title: 'Operations',
     items: [
+      { label: 'Patients', icon: Heart, path: ROUTES.PATIENTS, permission: 'PATIENTS:VIEW' },
       { label: 'Products', icon: Package, path: ROUTES.PRODUCTS, permission: 'PRODUCTS:VIEW' },
       { label: 'Inventory', icon: Warehouse, path: ROUTES.INVENTORY, permission: 'INVENTORY:VIEW' },
       { label: 'Billing', icon: Receipt, path: ROUTES.BILLING, permission: 'BILLING:VIEW' },
@@ -40,7 +41,7 @@ const menuSections = [
     title: 'Insights',
     items: [
       { label: 'Commissions', icon: PieChart, path: ROUTES.COMMISSIONS, permission: 'COMMISSIONS:VIEW', roles: [ROLES.SUPER_ADMIN] },
-      { label: 'Reports', icon: PieChart, path: ROUTES.REPORTS, permission: 'REPORTS:VIEW' },
+      { label: 'Reports', icon: BarChart3, path: ROUTES.REPORTS, permission: 'REPORTS:VIEW' },
       { label: 'Notifications', icon: Bell, path: ROUTES.NOTIFICATIONS, alwaysShow: true },
     ],
   },

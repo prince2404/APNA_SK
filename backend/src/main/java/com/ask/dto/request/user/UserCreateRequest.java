@@ -1,9 +1,9 @@
 package com.ask.dto.request.user;
 
 import com.ask.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,14 +33,18 @@ public class UserCreateRequest {
 
     @NotBlank(message = "Temporary password is required")
     @Size(min = 8, max = 100, message = "Temporary password must be between 8 and 100 characters")
+    @JsonAlias("password")
     private String temporaryPassword;
 
     private LocalDate dateOfBirth;
     private Gender gender;
     private String address;
 
-    @NotNull(message = "Role ID is required")
+    /** Role ID (optional if roleName is provided) */
     private Long roleId;
+
+    /** Role name as an alternative to roleId (e.g. "STATE_ADMIN") */
+    private String roleName;
 
     private Long stateId;
     private Long districtId;

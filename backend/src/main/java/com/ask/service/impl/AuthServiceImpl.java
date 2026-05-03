@@ -30,7 +30,8 @@ import java.util.List;
 
 /**
  * Authentication service implementation.
- * Handles: login, 2FA OTP flow, token refresh, logout, password change, account lockout.
+ * Handles: login, 2FA OTP flow, token refresh, logout, password change, account
+ * lockout.
  */
 @Slf4j
 @Service
@@ -62,7 +63,8 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * Authenticates user with email + password.
-     * Handles: account lockout, 2FA check, forced password change, session creation.
+     * Handles: account lockout, 2FA check, forced password change, session
+     * creation.
      */
     @Override
     @Transactional
@@ -102,7 +104,8 @@ public class AuthServiceImpl implements AuthService {
 
             // Step 7: Check if 2FA is required
             var twoFactorConfig = twoFactorConfigRepository.findByUserId(user.getId());
-            if (twoFactorConfig.isPresent() && (twoFactorConfig.get().getIsEnabled() || twoFactorConfig.get().getIsMandatory())) {
+            if (twoFactorConfig.isPresent()
+                    && (twoFactorConfig.get().getIsEnabled() || twoFactorConfig.get().getIsMandatory())) {
                 // Generate and send OTP, return partial response
                 String challengeToken = createPendingLoginChallenge(twoFactorConfig.get());
                 generateAndSendOtp(user, twoFactorConfig.get());
@@ -276,10 +279,12 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * Changes user password. Handles both forced and voluntary changes.
+     * For forced changes, returns a full LoginResponse with tokens so the user
+     * is fully authenticated after changing their password.
      */
     @Override
     @Transactional
-    public void changePassword(String email, ChangePasswordRequest request) {
+    public LoginResponse changePassword(String email, ChangePasswordRequest request, String ipAddress, String userAgent) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
@@ -298,13 +303,22 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidRequestException("New password must be different from current password");
         }
 
+        boolean wasForcedChange = user.getForcePasswordChange();
+
         // Update password
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         user.setForcePasswordChange(false);
         user.setPasswordChangedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        auditService.log(user, "PASSWORD_CHANGED", null, "Password changed successfully");
+        auditService.log(user, "PASSWORD_CHANGED", ipAddress, "Password changed successfully");
+
+        // If this was a forced password change, return full login response with tokens
+        if (wasForcedChange) {
+            return completeLogin(user, ipAddress, userAgent);
+        }
+
+        return null;
     }
 
     // --- Private Helpers ---
@@ -348,7 +362,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Handles failed login by incrementing counter and locking account if threshold reached.
+     * Handles failed login by incrementing counter and locking account if threshold
+     * reached.
      */
     private void handleFailedLogin(User user, String ipAddress) {
         int attempts = user.getFailedLoginAttempts() + 1;

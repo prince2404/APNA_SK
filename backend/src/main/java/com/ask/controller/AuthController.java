@@ -122,14 +122,22 @@ public class AuthController {
     /**
      * POST /api/v1/auth/change-password
      * Changes the authenticated user's password.
+     * For forced password changes, returns tokens so the user is fully authenticated.
      * Accessible by: Any authenticated user
      */
     @PostMapping(ApiPaths.AUTH_CHANGE_PASSWORD)
-    public ResponseEntity<ApiResponse<Void>> changePassword(
+    public ResponseEntity<ApiResponse<LoginResponse>> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody ChangePasswordRequest request) {
-        authService.changePassword(userDetails.getUsername(), request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully",
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletRequest httpRequest) {
+
+        String ipAddress = getClientIp(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+
+        LoginResponse response = authService.changePassword(
+                userDetails.getUsername(), request, ipAddress, userAgent);
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Password changed successfully",
                 ApiPaths.AUTH + ApiPaths.AUTH_CHANGE_PASSWORD));
     }
 

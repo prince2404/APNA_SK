@@ -61,7 +61,7 @@ public class GeographyController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
     public ResponseEntity<ApiResponse<PageResponse<StateResponse>>> getActiveStates(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getAllActiveStates(page, size), ApiPaths.STATES + "/active"));
     }
@@ -102,15 +102,17 @@ public class GeographyController {
                 geographyService.getDistrictById(id), ApiPaths.DISTRICTS + "/" + id));
     }
 
-    /** GET /api/v1/districts?stateId=1 — Get districts by state (paginated). Accessible by: All */
+    /** GET /api/v1/districts?stateId=1 — Get districts, optionally filtered by state. Accessible by: All */
     @GetMapping(ApiPaths.DISTRICTS)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
-    public ResponseEntity<ApiResponse<PageResponse<DistrictResponse>>> getDistrictsByState(
-            @RequestParam Long stateId,
+    public ResponseEntity<ApiResponse<PageResponse<DistrictResponse>>> getDistricts(
+            @RequestParam(required = false) Long stateId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.success(
-                geographyService.getDistrictsByState(stateId, page, size), ApiPaths.DISTRICTS));
+        PageResponse<DistrictResponse> result = stateId != null
+                ? geographyService.getDistrictsByState(stateId, page, size)
+                : geographyService.getAllDistricts(page, size);
+        return ResponseEntity.ok(ApiResponse.success(result, ApiPaths.DISTRICTS));
     }
 
     /** GET /api/v1/districts/active?stateId=1 — Active districts for dropdown. Accessible by: All */
@@ -119,7 +121,7 @@ public class GeographyController {
     public ResponseEntity<ApiResponse<PageResponse<DistrictResponse>>> getActiveDistricts(
             @RequestParam Long stateId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getActiveDistrictsByState(stateId, page, size), ApiPaths.DISTRICTS + "/active"));
     }
@@ -160,15 +162,23 @@ public class GeographyController {
                 geographyService.getBlockById(id), ApiPaths.BLOCKS + "/" + id));
     }
 
-    /** GET /api/v1/blocks?districtId=1 — Get blocks by district. Accessible by: All */
+    /** GET /api/v1/blocks?districtId=1&stateId=1 — Get blocks, filtered by district or state. Accessible by: All */
     @GetMapping(ApiPaths.BLOCKS)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
-    public ResponseEntity<ApiResponse<PageResponse<BlockResponse>>> getBlocksByDistrict(
-            @RequestParam Long districtId,
+    public ResponseEntity<ApiResponse<PageResponse<BlockResponse>>> getBlocks(
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) Long stateId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.success(
-                geographyService.getBlocksByDistrict(districtId, page, size), ApiPaths.BLOCKS));
+        PageResponse<BlockResponse> result;
+        if (districtId != null) {
+            result = geographyService.getBlocksByDistrict(districtId, page, size);
+        } else if (stateId != null) {
+            result = geographyService.getBlocksByState(stateId, page, size);
+        } else {
+            result = geographyService.getAllBlocks(page, size);
+        }
+        return ResponseEntity.ok(ApiResponse.success(result, ApiPaths.BLOCKS));
     }
 
     /** GET /api/v1/blocks/active?districtId=1 — Active blocks for dropdown. Accessible by: All */
@@ -177,7 +187,7 @@ public class GeographyController {
     public ResponseEntity<ApiResponse<PageResponse<BlockResponse>>> getActiveBlocks(
             @RequestParam Long districtId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         return ResponseEntity.ok(ApiResponse.success(
                 geographyService.getActiveBlocksByDistrict(districtId, page, size), ApiPaths.BLOCKS + "/active"));
     }
@@ -218,15 +228,23 @@ public class GeographyController {
                 geographyService.getStoreById(id), ApiPaths.STORES + "/" + id));
     }
 
-    /** GET /api/v1/stores?blockId=1 — Get stores by block. Accessible by: All */
+    /** GET /api/v1/stores?blockId=1&stateId=1 — Get stores, filtered by block or state. Accessible by: All */
     @GetMapping(ApiPaths.STORES)
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_GEOGRAPHY_VIEW') or hasAuthority('PERM_GEOGRAPHY_MANAGE')")
-    public ResponseEntity<ApiResponse<PageResponse<StoreResponse>>> getStoresByBlock(
-            @RequestParam Long blockId,
+    public ResponseEntity<ApiResponse<PageResponse<StoreResponse>>> getStores(
+            @RequestParam(required = false) Long blockId,
+            @RequestParam(required = false) Long stateId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.success(
-                geographyService.getStoresByBlock(blockId, page, size), ApiPaths.STORES));
+        PageResponse<StoreResponse> result;
+        if (blockId != null) {
+            result = geographyService.getStoresByBlock(blockId, page, size);
+        } else if (stateId != null) {
+            result = geographyService.getStoresByState(stateId, page, size);
+        } else {
+            result = geographyService.getAllStores(page, size);
+        }
+        return ResponseEntity.ok(ApiResponse.success(result, ApiPaths.STORES));
     }
 
     /** PUT /api/v1/stores/{id} — Update store. Accessible by: SUPER_ADMIN, SYSTEM_ADMIN */

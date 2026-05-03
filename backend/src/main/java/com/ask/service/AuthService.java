@@ -53,9 +53,14 @@ public interface AuthService {
 
     /**
      * Changes the user's password. Used for both forced change and voluntary change.
+     * Returns a LoginResponse with tokens when it's a forced password change,
+     * so the frontend can establish a full authenticated session.
      *
      * @param email   the authenticated user's email
      * @param request password change data
+     * @param ipAddress client IP for session tracking
+     * @param userAgent browser/device info for session tracking
+     * @return LoginResponse with tokens if forced change, null otherwise
      */
-    void changePassword(String email, ChangePasswordRequest request);
+    LoginResponse changePassword(String email, ChangePasswordRequest request, String ipAddress, String userAgent);
 }

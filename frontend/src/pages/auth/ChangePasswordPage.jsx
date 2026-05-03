@@ -15,9 +15,12 @@ export default function ChangePasswordPage() {
   const [showPasswords, setShowPasswords] = useState({});
   const [loading, setLoading] = useState(false);
   const { changePassword } = useAuth();
-  const { requiresPasswordChange, accessToken } = useAuthStore();
+  const { requiresPasswordChange, accessToken, isAuthenticated } = useAuthStore();
 
-  if (!requiresPasswordChange && !accessToken) return <Navigate to={ROUTES.LOGIN} replace />;
+  if (!requiresPasswordChange && !accessToken) {
+    if (isAuthenticated) return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
 
   const updateField = (field, value) => setForm((f) => ({ ...f, [field]: value }));
   const toggleShow = (field) => setShowPasswords((s) => ({ ...s, [field]: !s[field] }));

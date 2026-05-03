@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse createUser(UserCreateRequest request, String currentUserEmail) {
         User currentUser = getCurrentUser(currentUserEmail);
-        Role targetRole = getRole(request.getRoleId());
+        Role targetRole = resolveRole(request);
         ensureCanManageRole(currentUser, targetRole);
         validateAadhaarLastFour(request.getAadhaarLastFour());
 
@@ -425,6 +425,21 @@ public class UserServiceImpl implements UserService {
     private Role getRole(Long id) {
         return roleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "id", id));
+    }
+
+    /**
+     * Resolves a Role from either roleId or roleName in the request.
+     * roleId takes precedence if both are provided.
+     */
+    private Role resolveRole(UserCreateRequest request) {
+        if (request.getRoleId() != null) {
+            return getRole(request.getRoleId());
+        }
+        if (request.getRoleName() != null && !request.getRoleName().isBlank()) {
+            return roleRepository.findByName(request.getRoleName())
+                    .orElseThrow(() -> new ResourceNotFoundException("Role", "name", request.getRoleName()));
+        }
+        throw new InvalidRequestException("Either roleId or roleName must be provided");
     }
 
     private State getState(Long id) {

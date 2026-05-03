@@ -1,7 +1,8 @@
 -- =============================================================================
 -- V4__seed_initial_data.sql
--- Seeds: 3 states, 8 roles, default permissions, default system config,
--- and the Super Admin account.
+-- Seeds: 3 states, 8 roles, default permissions, and default system config.
+-- Super Admin is created via ApplicationRunner (SuperAdminSeeder.java)
+-- using environment variables — NOT hardcoded here.
 -- =============================================================================
 
 -- Seed states
@@ -66,28 +67,6 @@ INSERT INTO permissions (module, action, description) VALUES
     -- Geography
     ('GEOGRAPHY', 'VIEW', 'View geographic hierarchy'),
     ('GEOGRAPHY', 'MANAGE', 'Create and edit states, districts, blocks');
-
--- Seed Super Admin user
--- Password: AskAdmin@2026 (BCrypt hash with strength 12)
-INSERT INTO users (full_name, email, phone, password_hash, role_id, status, verification_status, force_password_change)
-VALUES (
-    'Super Admin',
-    'admin@askhealth.in',
-    '9999999999',
-    '$2a$12$LJ3m4ys3uz0b5V1hN1KvBOQMJ6kCqkMPR/LHPNhVMYNbKNEqJSMuG',
-    (SELECT id FROM roles WHERE name = 'SUPER_ADMIN'),
-    'ACTIVE',
-    'VERIFIED',
-    TRUE
-);
-
--- Create 2FA config for Super Admin (mandatory)
-INSERT INTO two_factor_config (user_id, is_enabled, is_mandatory)
-VALUES (
-    (SELECT id FROM users WHERE email = 'admin@askhealth.in'),
-    TRUE,
-    TRUE
-);
 
 -- Seed default system configuration
 INSERT INTO system_config (config_key, config_value, description) VALUES

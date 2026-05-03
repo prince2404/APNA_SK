@@ -150,6 +150,20 @@ public class GeographyServiceImpl implements GeographyService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<DistrictResponse> getAllDistricts(int page, int size) {
+        User currentUser = getCurrentUser();
+        size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<District> districtPage = hasPlatformScope(currentUser)
+                ? districtRepository.findByStatus(EntityStatus.ACTIVE, pageRequest)
+                : districtRepository.findByStateIdAndStatus(requireStateId(currentUser), EntityStatus.ACTIVE, pageRequest);
+        List<DistrictResponse> content = districtPage.getContent().stream()
+                .map(geographyMapper::toDistrictResponse).toList();
+        return PageResponse.of(districtPage, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<DistrictResponse> getDistrictsByState(Long stateId, int page, int size) {
         User currentUser = getCurrentUser();
         getStateInScope(stateId);
@@ -223,6 +237,22 @@ public class GeographyServiceImpl implements GeographyService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<BlockResponse> getAllBlocks(int page, int size) {
+        User currentUser = getCurrentUser();
+        size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Block> blockPage = hasPlatformScope(currentUser)
+                ? blockRepository.findByStatus(EntityStatus.ACTIVE, pageRequest)
+                : blockRepository.findByDistrictIdAndStatus(
+                        getScopedDistrictId(currentUser) != null ? getScopedDistrictId(currentUser) : -1L,
+                        EntityStatus.ACTIVE, pageRequest);
+        List<BlockResponse> content = blockPage.getContent().stream()
+                .map(geographyMapper::toBlockResponse).toList();
+        return PageResponse.of(blockPage, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<BlockResponse> getBlocksByDistrict(Long districtId, int page, int size) {
         User currentUser = getCurrentUser();
         getDistrictInScope(districtId);
@@ -240,6 +270,18 @@ public class GeographyServiceImpl implements GeographyService {
     @Transactional(readOnly = true)
     public PageResponse<BlockResponse> getActiveBlocksByDistrict(Long districtId, int page, int size) {
         return getBlocksByDistrict(districtId, page, size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<BlockResponse> getBlocksByState(Long stateId, int page, int size) {
+        getStateInScope(stateId);
+        size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Block> blockPage = blockRepository.findByStateId(stateId, pageRequest);
+        List<BlockResponse> content = blockPage.getContent().stream()
+                .map(geographyMapper::toBlockResponse).toList();
+        return PageResponse.of(blockPage, content);
     }
 
     @Override
@@ -303,6 +345,22 @@ public class GeographyServiceImpl implements GeographyService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<StoreResponse> getAllStores(int page, int size) {
+        User currentUser = getCurrentUser();
+        size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Store> storePage = hasPlatformScope(currentUser)
+                ? storeRepository.findByStatus(EntityStatus.ACTIVE, pageRequest)
+                : storeRepository.findByBlockIdAndStatus(
+                        getScopedBlockId(currentUser) != null ? getScopedBlockId(currentUser) : -1L,
+                        EntityStatus.ACTIVE, pageRequest);
+        List<StoreResponse> content = storePage.getContent().stream()
+                .map(geographyMapper::toStoreResponse).toList();
+        return PageResponse.of(storePage, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<StoreResponse> getStoresByBlock(Long blockId, int page, int size) {
         User currentUser = getCurrentUser();
         getBlockInScope(blockId);
@@ -311,6 +369,18 @@ public class GeographyServiceImpl implements GeographyService {
         Page<Store> storePage = getScopedStoreId(currentUser) != null
                 ? storeRepository.findByIdAndStatus(getScopedStoreId(currentUser), EntityStatus.ACTIVE, pageRequest)
                 : storeRepository.findByBlockIdAndStatus(blockId, EntityStatus.ACTIVE, pageRequest);
+        List<StoreResponse> content = storePage.getContent().stream()
+                .map(geographyMapper::toStoreResponse).toList();
+        return PageResponse.of(storePage, content);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<StoreResponse> getStoresByState(Long stateId, int page, int size) {
+        getStateInScope(stateId);
+        size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Store> storePage = storeRepository.findByStateIdAndStatus(stateId, EntityStatus.ACTIVE, pageRequest);
         List<StoreResponse> content = storePage.getContent().stream()
                 .map(geographyMapper::toStoreResponse).toList();
         return PageResponse.of(storePage, content);

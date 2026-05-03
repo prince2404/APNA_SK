@@ -1,1 +1,6 @@
+com\ask\service\impl\SessionServiceImplTest.class
+com\ask\util\EncryptionUtilTest.class
+com\ask\security\AuthRateLimitFilterTest.class
+com\ask\service\impl\AuthServiceImplTest.class
+com\ask\service\impl\GeographyServiceImplTest.class
 com\ask\service\impl\UserServiceImplTest.class

@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-05-01T18:11:49+0530",
-    comments = "version: 1.6.3, compiler: Eclipse JDT (IDE) 3.46.0.v20260407-0427, environment: Java 21.0.10 (Eclipse Adoptium)"
+    date = "2026-05-03T19:15:21+0530",
+    comments = "version: 1.6.3, compiler: javac, environment: Java 24.0.1 (Oracle Corporation)"
 )
 @Component
 public class GeographyMapperImpl implements GeographyMapper {
@@ -27,9 +27,9 @@ public class GeographyMapperImpl implements GeographyMapper {
 
         StateResponse.StateResponseBuilder stateResponse = StateResponse.builder();
 
-        stateResponse.code( state.getCode() );
         stateResponse.id( state.getId() );
         stateResponse.name( state.getName() );
+        stateResponse.code( state.getCode() );
         if ( state.getStatus() != null ) {
             stateResponse.status( state.getStatus().name() );
         }
@@ -97,12 +97,12 @@ public class GeographyMapperImpl implements GeographyMapper {
         storeResponse.districtName( storeBlockDistrictName( store ) );
         storeResponse.stateId( storeBlockDistrictStateId( store ) );
         storeResponse.stateName( storeBlockDistrictStateName( store ) );
-        storeResponse.address( store.getAddress() );
-        storeResponse.code( store.getCode() );
         storeResponse.id( store.getId() );
         storeResponse.name( store.getName() );
-        storeResponse.operatingHours( store.getOperatingHours() );
+        storeResponse.code( store.getCode() );
+        storeResponse.address( store.getAddress() );
         storeResponse.phone( store.getPhone() );
+        storeResponse.operatingHours( store.getOperatingHours() );
         if ( store.getStatus() != null ) {
             storeResponse.status( store.getStatus().name() );
         }

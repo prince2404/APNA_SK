@@ -15,11 +15,16 @@ export default function VerifyOtpPage() {
   const [resending, setResending] = useState(false);
   const inputRefs = useRef([]);
   const { verifyOtp, resendOtp } = useAuth();
-  const { requiresTwoFactor, twoFactorEmail } = useAuthStore();
+  const { requiresTwoFactor, twoFactorEmail, isAuthenticated } = useAuthStore();
 
   useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
-  if (!requiresTwoFactor) return <Navigate to={ROUTES.LOGIN} replace />;
+  // After successful OTP verification, isAuthenticated becomes true and requiresTwoFactor becomes false
+  // in the same store update — redirect to dashboard, not login
+  if (!requiresTwoFactor) {
+    if (isAuthenticated) return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
 
   const handleChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;

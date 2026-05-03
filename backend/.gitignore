@@ -1,0 +1,32 @@
+# =============================================================================
+# Backend .gitignore — Spring Boot
+# =============================================================================
+
+# Environment files (contain secrets)
+.env
+.env.local
+!.env.example
+
+# Build output
+target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+.factorypath
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

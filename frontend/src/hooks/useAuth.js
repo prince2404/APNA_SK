@@ -68,11 +68,19 @@ export function useAuth() {
   }, [twoFactorEmail, twoFactorChallengeToken]);
 
   const changePassword = useCallback(async (currentPassword, newPassword, confirmPassword) => {
-    await authApi.changePassword({ currentPassword, newPassword, confirmPassword });
-    clearPasswordChange();
+    const response = await authApi.changePassword({ currentPassword, newPassword, confirmPassword });
+    const data = response.data.data;
+
+    // Backend returns LoginResponse with tokens for forced password changes
+    if (data && data.accessToken) {
+      setLoginResponse(data);
+    } else {
+      clearPasswordChange();
+    }
+
     navigate(ROUTES.DASHBOARD);
     toast.success('Password changed successfully');
-  }, [navigate, clearPasswordChange]);
+  }, [navigate, setLoginResponse, clearPasswordChange]);
 
   const logout = useCallback(async () => {
     try {

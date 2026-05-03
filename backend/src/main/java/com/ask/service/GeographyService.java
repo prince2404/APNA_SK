@@ -22,6 +22,7 @@ public interface GeographyService {
     // --- Districts ---
     DistrictResponse createDistrict(DistrictRequest request);
     DistrictResponse getDistrictById(Long id);
+    PageResponse<DistrictResponse> getAllDistricts(int page, int size);
     PageResponse<DistrictResponse> getDistrictsByState(Long stateId, int page, int size);
     PageResponse<DistrictResponse> getActiveDistrictsByState(Long stateId, int page, int size);
     DistrictResponse updateDistrict(Long id, DistrictRequest request);
@@ -30,7 +31,9 @@ public interface GeographyService {
     // --- Blocks ---
     BlockResponse createBlock(BlockRequest request);
     BlockResponse getBlockById(Long id);
+    PageResponse<BlockResponse> getAllBlocks(int page, int size);
     PageResponse<BlockResponse> getBlocksByDistrict(Long districtId, int page, int size);
+    PageResponse<BlockResponse> getBlocksByState(Long stateId, int page, int size);
     PageResponse<BlockResponse> getActiveBlocksByDistrict(Long districtId, int page, int size);
     BlockResponse updateBlock(Long id, BlockRequest request);
     void toggleBlockStatus(Long id);
@@ -38,7 +41,9 @@ public interface GeographyService {
     // --- Stores ---
     StoreResponse createStore(StoreRequest request);
     StoreResponse getStoreById(Long id);
+    PageResponse<StoreResponse> getAllStores(int page, int size);
     PageResponse<StoreResponse> getStoresByBlock(Long blockId, int page, int size);
+    PageResponse<StoreResponse> getStoresByState(Long stateId, int page, int size);
     StoreResponse updateStore(Long id, StoreRequest request);
     void toggleStoreStatus(Long id);
 }
