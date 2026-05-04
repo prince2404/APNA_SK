@@ -2,7 +2,7 @@ package com.ask.service;
 
 /**
  * Email service interface for sending emails.
- * Implemented via JavaMailSender + Gmail SMTP.
+ * Implemented via Brevo HTTP API (sends over HTTPS, not SMTP).
  * Behind an interface so providers can be swapped later.
  */
 public interface EmailService {
