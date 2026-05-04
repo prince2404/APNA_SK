@@ -15,14 +15,17 @@ export default function VerifyOtpPage() {
   const [resending, setResending] = useState(false);
   const inputRefs = useRef([]);
   const { verifyOtp, resendOtp } = useAuth();
-  const { requiresTwoFactor, twoFactorEmail, isAuthenticated } = useAuthStore();
+  const { requiresTwoFactor, twoFactorEmail, isAuthenticated, requiresPasswordChange } = useAuthStore();
 
   useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
   // After successful OTP verification, isAuthenticated becomes true and requiresTwoFactor becomes false
-  // in the same store update — redirect to dashboard, not login
+  // in the same store update — redirect to dashboard, not login.
+  // For users with forced password change (e.g. System Admin), requiresPasswordChange is true
+  // but isAuthenticated is still false — route them to change-password, not login.
   if (!requiresTwoFactor) {
     if (isAuthenticated) return <Navigate to={ROUTES.DASHBOARD} replace />;
+    if (requiresPasswordChange) return <Navigate to={ROUTES.CHANGE_PASSWORD} replace />;
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
