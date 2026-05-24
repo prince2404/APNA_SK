@@ -53,6 +53,12 @@ class UserServiceImplTest {
     private UserMapper userMapper;
     @Mock
     private AuditService auditService;
+    @Mock
+    private com.ask.service.FileStorageService fileStorageService;
+    @Mock
+    private com.ask.service.NotificationService notificationService;
+    @Mock
+    private com.ask.util.EncryptionUtil encryptionUtil;
 
     @InjectMocks
     private UserServiceImpl userService;

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ask-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ask_db
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ask-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DB_URL=jdbc:mysql://mysql:3306/ask_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata&createDatabaseIfNotExist=true
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - JWT_SECRET=537189a07153a51fcf54ea0101b09b5a03492582845aefb32ef1e039478fcfd06d4e28cd1abf47b2c5b
+      - AES_SECRET_KEY=b2c5896a2d1e56cf9e8a012b1a3d905c
+      - SUPER_ADMIN_EMAIL=admin@askhealth.in
+      - SUPER_ADMIN_PASSWORD=AdminPassword123!
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173
+      - BREVO_API_KEY=mock-api-key
+      - BREVO_SENDER_EMAIL=sender@askhealth.in
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - upload-data:/app/uploads
+
+volumes:
+  mysql-data:
+  upload-data:

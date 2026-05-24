@@ -156,6 +156,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles session revoked exception (401).
+     */
+    @ExceptionHandler(SessionRevokedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSessionRevoked(
+            SessionRevokedException ex, HttpServletRequest request) {
+        log.warn("Session revoked exception: {}", ex.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "SESSION_REVOKED", request);
+    }
+
+    /**
      * Handles general authentication failures.
      */
     @ExceptionHandler(AuthenticationException.class)

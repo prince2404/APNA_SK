@@ -8,11 +8,15 @@ import com.ask.dto.response.common.ApiResponse;
 import com.ask.dto.response.common.PageResponse;
 import com.ask.dto.response.user.PermissionResponse;
 import com.ask.dto.response.user.UserResponse;
+import com.ask.dto.request.user.KycReviewRequest;
 import com.ask.enums.UserStatus;
 import com.ask.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -111,5 +115,37 @@ public class UserController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW') or hasAuthority('PERM_USERS_EDIT')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getPermissions() {
         return ResponseEntity.ok(ApiResponse.success(userService.getAllPermissions(), ApiPaths.PERMISSIONS));
+    }
+
+    @GetMapping(ApiPaths.USERS + "/verification-queue")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW')")
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getVerificationQueue(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResponse<UserResponse> response = userService.getVerificationQueue(userDetails.getUsername(), page, size);
+        return ResponseEntity.ok(ApiResponse.success(response, ApiPaths.USERS + "/verification-queue"));
+    }
+
+    @PostMapping(ApiPaths.USERS + "/{id}/verify")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> verifyUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody KycReviewRequest request) {
+        UserResponse response = userService.verifyUser(id, request, userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success(response, "User KYC status updated successfully", ApiPaths.USERS + "/" + id + "/verify"));
+    }
+
+    @GetMapping(ApiPaths.USERS + "/{id}/kyc/document")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW')")
+    public ResponseEntity<Resource> downloadUserKycDocument(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        Resource resource = userService.getUserKycDocument(id, userDetails.getUsername());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
     }
 }

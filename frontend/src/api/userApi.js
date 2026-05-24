@@ -10,4 +10,7 @@ export const userApi = {
   reactivateUser: (id) => axiosInstance.patch(`${API_PATHS.USERS}/${id}/reactivate`),
   assignPermissions: (id, data) => axiosInstance.put(`${API_PATHS.USERS}/${id}/permissions`, data),
   getPermissions: () => axiosInstance.get(API_PATHS.PERMISSIONS),
+  getVerificationQueue: (params) => axiosInstance.get(`${API_PATHS.USERS}/verification-queue`, { params }),
+  verifyUser: (id, data) => axiosInstance.post(`${API_PATHS.USERS}/${id}/verify`, data),
+  getUserKycDocument: (id) => axiosInstance.get(`${API_PATHS.USERS}/${id}/kyc/document`, { responseType: 'blob' }),
 };

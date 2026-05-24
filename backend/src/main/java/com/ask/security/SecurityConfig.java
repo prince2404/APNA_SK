@@ -20,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -41,6 +42,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthRateLimitFilter authRateLimitFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     /**
      * Configures the security filter chain.
@@ -51,6 +53,9 @@ public class SecurityConfig {
         http
                 // Disable CSRF — not needed for stateless JWT APIs
                 .csrf(AbstractHttpConfigurer::disable)
+
+                // Enable CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
                 // Stateless session management — no server-side sessions
                 .sessionManagement(session ->

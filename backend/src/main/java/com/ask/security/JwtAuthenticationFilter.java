@@ -1,5 +1,6 @@
 package com.ask.security;
 
+import com.ask.repository.UserSessionRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 /**
  * JWT authentication filter that runs on every request.
@@ -35,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final UserSessionRepository userSessionRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -48,6 +51,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
                 // Step 3: Get the email from the token
                 String email = jwtTokenProvider.getEmailFromToken(token);
+
+                // Step 3.5: Get session fingerprint and verify if it's revoked
+                String fingerprint = jwtTokenProvider.getTokenFingerprintFromToken(token);
+                if (fingerprint != null) {
+                    var sessionOpt = userSessionRepository.findByTokenFingerprint(fingerprint);
+                    if (sessionOpt.isEmpty() || sessionOpt.get().getIsRevoked()) {
+                        log.warn("Access token has revoked session fingerprint: {}", fingerprint);
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.getWriter().write(String.format(
+                                "{\"success\":false,\"message\":\"You have been logged out because your account was accessed from another device.\",\"errorCode\":\"SESSION_REVOKED\",\"timestamp\":\"%s\",\"path\":\"%s\"}",
+                                LocalDateTime.now().toString(),
+                                request.getRequestURI()
+                        ));
+                        return; // Halt request processing immediately
+                    }
+                }
 
                 // Step 4: Load user details (also checks if account is active)
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);

@@ -13,6 +13,8 @@ export const ROUTES = {
   USER_CREATE: '/users/create',
   USER_DETAIL: '/users/:id',
   USER_EDIT: '/users/:id/edit',
+  VERIFICATION_QUEUE: '/users/verification-queue',
+  PERMISSION_REQUESTS: '/users/permission-requests',
 
   // Geography
   STATES: '/geography/states',
@@ -25,6 +27,8 @@ export const ROUTES = {
 
   // Patients
   PATIENTS: '/patients',
+  PATIENTS_BULK_UPLOAD: '/patients/bulk-upload',
+  HOSPITALS: '/hospitals',
 
   // Health Cards
   HEALTH_CARDS: '/health-cards',
@@ -37,9 +41,16 @@ export const ROUTES = {
 
   // Billing
   BILLING: '/billing',
+  SCHEMES: '/schemes',
+  INVOICES: '/billing/invoices',
 
   // Commission
   COMMISSIONS: '/commissions',
+
+  // Messaging
+  MESSAGES: '/messages',
+  MESSAGE_TEMPLATES: '/messages/templates',
+  MESSAGE_HISTORY: '/messages/history',
 
   // Notifications
   NOTIFICATIONS: '/notifications',

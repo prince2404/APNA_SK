@@ -25,17 +25,29 @@ import StoresPage from '@/pages/geography/StoresPage';
 import UserListPage from '@/pages/users/UserListPage';
 import UserCreatePage from '@/pages/users/UserCreatePage';
 import UserDetailPage from '@/pages/users/UserDetailPage';
+import VerificationQueuePage from '@/pages/users/VerificationQueuePage';
+import PermissionRequestsPage from '@/pages/users/PermissionRequestsPage';
 
 // Operations (Phase 3-4 placeholders)
 import ProductsPage from '@/pages/products/ProductsPage';
 import InventoryPage from '@/pages/inventory/InventoryPage';
 import BillingPage from '@/pages/billing/BillingPage';
 import PatientsPage from '@/pages/patients/PatientsPage';
+import BulkUploadPage from '@/pages/patients/BulkUploadPage';
+import HospitalsPage from '@/pages/hospitals/HospitalsPage';
+import HealthCardsPage from '@/pages/health-cards/HealthCardsPage';
+import BillsPage from '@/pages/billing/BillsPage';
+import SchemesPage from '@/pages/billing/SchemesPage';
 
 // Insights (Phase 5 placeholders)
 import CommissionsPage from '@/pages/commissions/CommissionsPage';
 import ReportsPage from '@/pages/reports/ReportsPage';
 import NotificationsPage from '@/pages/notifications/NotificationsPage';
+
+// Messaging (Phase 6)
+import BulkMessageComposer from '@/pages/messages/BulkMessageComposer';
+import MessageTemplatesPage from '@/pages/messages/MessageTemplatesPage';
+import MessageHistoryPage from '@/pages/messages/MessageHistoryPage';
 
 // Supporting
 import SessionsPage from '@/pages/sessions/SessionsPage';
@@ -77,9 +89,21 @@ function App() {
         <Route path={ROUTES.USER_CREATE} element={<UserCreatePage />} />
         <Route path={ROUTES.USER_DETAIL} element={<UserDetailPage />} />
         <Route path={ROUTES.USER_EDIT} element={<UserDetailPage />} />
+        <Route
+          path={ROUTES.VERIFICATION_QUEUE}
+          element={
+            <RoleGuard roles={[ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN]}>
+              <VerificationQueuePage />
+            </RoleGuard>
+          }
+        />
+        <Route path={ROUTES.PERMISSION_REQUESTS} element={<PermissionRequestsPage />} />
 
         {/* Patients */}
         <Route path={ROUTES.PATIENTS} element={<PatientsPage />} />
+        <Route path={ROUTES.PATIENTS_BULK_UPLOAD} element={<BulkUploadPage />} />
+        <Route path={ROUTES.HOSPITALS} element={<HospitalsPage />} />
+        <Route path={ROUTES.HEALTH_CARDS} element={<HealthCardsPage />} />
 
         {/* Products & Inventory */}
         <Route path={ROUTES.PRODUCTS} element={<ProductsPage />} />
@@ -87,19 +111,40 @@ function App() {
 
         {/* Billing */}
         <Route path={ROUTES.BILLING} element={<BillingPage />} />
+        <Route path={ROUTES.INVOICES} element={<BillsPage />} />
+        <Route path={ROUTES.SCHEMES} element={<SchemesPage />} />
 
-        {/* Commissions (Super Admin only) */}
-        <Route
-          path={ROUTES.COMMISSIONS}
-          element={
-            <RoleGuard roles={[ROLES.SUPER_ADMIN]}>
-              <CommissionsPage />
-            </RoleGuard>
-          }
-        />
+        {/* Commissions */}
+        <Route path={ROUTES.COMMISSIONS} element={<CommissionsPage />} />
 
         {/* Reports */}
         <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
+
+        {/* Messaging (Admins Only) */}
+        <Route
+          path={ROUTES.MESSAGES}
+          element={
+            <RoleGuard roles={[ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN]}>
+              <BulkMessageComposer />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path={ROUTES.MESSAGE_TEMPLATES}
+          element={
+            <RoleGuard roles={[ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN]}>
+              <MessageTemplatesPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path={ROUTES.MESSAGE_HISTORY}
+          element={
+            <RoleGuard roles={[ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN]}>
+              <MessageHistoryPage />
+            </RoleGuard>
+          }
+        />
 
         {/* Notifications */}
         <Route path={ROUTES.NOTIFICATIONS} element={<NotificationsPage />} />

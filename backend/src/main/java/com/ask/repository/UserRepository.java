@@ -25,4 +25,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     boolean existsByPhoneAndIdNot(String phone, Long id);
 
     Optional<User> findByEmailAndStatus(String email, UserStatus status);
+
+    java.util.List<User> findByRoleName(String roleName);
+
+    java.util.List<User> findByRoleNameIn(java.util.List<String> roleNames);
 }

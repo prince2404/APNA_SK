@@ -38,49 +38,79 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isSessionRevoked = error.response?.data?.errorCode === 'SESSION_REVOKED';
 
-    // If 401 and not already retrying
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Don't retry auth endpoints
-      if (originalRequest.url?.includes('/auth/')) {
+    // If 401 Unauthorized
+    if (error.response?.status === 401) {
+      // 1. If it's a login credentials error, do not redirect/logout
+      if (error.response?.data?.errorCode === 'INVALID_CREDENTIALS') {
         return Promise.reject(error);
       }
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axiosInstance(originalRequest);
-        });
+      // 2. If session is explicitly revoked, logout and redirect immediately
+      if (isSessionRevoked) {
+        useAuthStore.getState().logout();
+        localStorage.setItem(
+          'logout_message',
+          'You have been logged out because your account was accessed from another device.'
+        );
+        window.location.href = '/login';
+        return Promise.reject(error);
       }
 
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const { refreshToken } = useAuthStore.getState();
-        if (!refreshToken) {
-          useAuthStore.getState().logout();
+      // 3. Otherwise, try to refresh the token (normal access token expiry)
+      if (!originalRequest._retry) {
+        // Don't retry other auth endpoints
+        if (originalRequest.url?.includes('/auth/')) {
           return Promise.reject(error);
         }
 
-        const response = await axios.post(`${API_BASE}${API_PATHS.AUTH_REFRESH}`, {
-          refreshToken,
-        });
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          });
+        }
 
-        const { accessToken: newAccessToken } = response.data.data;
-        useAuthStore.getState().setTokens(newAccessToken, refreshToken);
+        originalRequest._retry = true;
+        isRefreshing = true;
 
-        processQueue(null, newAccessToken);
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError);
-        useAuthStore.getState().logout();
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+        try {
+          const { refreshToken } = useAuthStore.getState();
+          if (!refreshToken) {
+            useAuthStore.getState().logout();
+            localStorage.setItem(
+              'logout_message',
+              'You have been logged out because your account was accessed from another device.'
+            );
+            window.location.href = '/login';
+            return Promise.reject(error);
+          }
+
+          const response = await axios.post(`${API_BASE}${API_PATHS.AUTH_REFRESH}`, {
+            refreshToken,
+          });
+
+          const { accessToken: newAccessToken } = response.data.data;
+          useAuthStore.getState().setTokens(newAccessToken, refreshToken);
+
+          processQueue(null, newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return axiosInstance(originalRequest);
+        } catch (refreshError) {
+          processQueue(refreshError);
+          useAuthStore.getState().logout();
+          localStorage.setItem(
+            'logout_message',
+            'You have been logged out because your account was accessed from another device.'
+          );
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
       }
     }
 

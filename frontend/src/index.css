@@ -147,13 +147,134 @@ body {
 }
 
 /* --- Dark Mode --- */
-@media (prefers-color-scheme: dark) {
-  :root.auto-dark {
-    --color-surface-50: #0f172a;
-    --color-surface-100: #1e293b;
-    --color-surface-200: #334155;
-    --color-surface-300: #475569;
-    --color-surface-900: #f8fafc;
-    --color-surface-950: #ffffff;
-  }
+:root.dark {
+  --color-surface-50: #0b0f19;      /* Dark page background */
+  --color-surface-100: #121824;     /* Card / container dark background */
+  --color-surface-200: #1e293b;     /* Border / divider colors */
+  --color-surface-300: #334155;     /* Darker hover state colors */
+  --color-surface-400: #475569;     /* Slate subtitle/placeholder */
+  --color-surface-500: #64748b;     /* Slate-500 */
+  --color-surface-600: #94a3b8;     /* Muted/body text */
+  --color-surface-700: #cbd5e1;     /* Light gray text */
+  --color-surface-800: #e2e8f0;     /* Highlight / strong text */
+  --color-surface-900: #f8fafc;     /* Headings / titles */
+  --color-surface-950: #ffffff;     /* Absolute contrast text */
+
+  --color-sidebar-bg: #0b0f19;
+  --color-sidebar-hover: #1e293b;
+
+  /* Slate overrides to allow components using hardcoded slate colors to adapt */
+  --color-slate-50: #1e293b;
+  --color-slate-100: #334155;
+  --color-slate-200: #475569;
+  --color-slate-300: #64748b;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #cbd5e1;
+  --color-slate-600: #e2e8f0;
+  --color-slate-700: #f1f5f9;
+  --color-slate-800: #f8fafc;
+  --color-slate-900: #ffffff;
 }
+
+/* Global class overrides for elements styled with bg-white or text-slate- */
+.dark body {
+  background-color: var(--color-surface-50);
+  color: var(--color-surface-900);
+}
+
+.dark .bg-white {
+  background-color: var(--color-surface-100) !important;
+}
+
+.dark .text-surface-900 {
+  color: var(--color-surface-900) !important;
+}
+.dark .text-surface-800 {
+  color: var(--color-surface-800) !important;
+}
+.dark .text-surface-700 {
+  color: var(--color-surface-700) !important;
+}
+.dark .text-surface-600 {
+  color: var(--color-surface-600) !important;
+}
+.dark .text-surface-500 {
+  color: var(--color-surface-500) !important;
+}
+.dark .text-surface-400 {
+  color: var(--color-surface-400) !important;
+}
+
+.dark .border-surface-200,
+.dark .border-surface-200\/60,
+.dark .border-surface-100 {
+  border-color: var(--color-surface-200) !important;
+}
+
+.dark .divide-surface-200 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-surface-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--color-surface-200) !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--color-surface-100) !important;
+  color: var(--color-surface-900) !important;
+  border-color: var(--color-surface-200) !important;
+}
+
+.dark table {
+  background-color: var(--color-surface-100) !important;
+}
+.dark thead {
+  background-color: var(--color-surface-200) !important;
+}
+.dark tbody {
+  background-color: var(--color-surface-100) !important;
+}
+.dark tr {
+  border-color: var(--color-surface-200) !important;
+}
+
+.dark .hover\:bg-surface-50:hover {
+  background-color: var(--color-surface-200) !important;
+}
+.dark .hover\:bg-surface-100:hover {
+  background-color: var(--color-surface-300) !important;
+}
+
+/* Handle dropdowns/modals using white background */
+.dark .bg-white\/95 {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+}
+
+/* Force white text to remain white in dark mode */
+.dark .text-white {
+  color: #ffffff !important;
+}
+.dark .hover\:text-white:hover {
+  color: #ffffff !important;
+}
+.dark .focus\:text-white:focus {
+  color: #ffffff !important;
+}
+
+/* Toast backgrounds and popups */
+.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: var(--color-primary-300) !important;
+}
+.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  color: var(--color-danger-500) !important;
+}
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  color: var(--color-warning-500) !important;
+}
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #60a5fa !important;
+}
+

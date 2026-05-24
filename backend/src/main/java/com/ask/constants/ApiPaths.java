@@ -34,6 +34,7 @@ public final class ApiPaths {
     // --- Patients ---
     public static final String PATIENTS = V1 + "/patients";
     public static final String PATIENTS_BULK_UPLOAD = "/bulk-upload";
+    public static final String HOSPITALS = V1 + "/hospitals";
 
     // --- Health Cards ---
     public static final String HEALTH_CARDS = V1 + "/health-cards";
@@ -79,4 +80,7 @@ public final class ApiPaths {
 
     // --- System Config ---
     public static final String SYSTEM_CONFIG = V1 + "/system-config";
+
+    // --- Dashboard ---
+    public static final String DASHBOARD = V1 + "/dashboard";
 }

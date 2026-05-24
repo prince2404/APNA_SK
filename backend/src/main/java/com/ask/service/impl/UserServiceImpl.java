@@ -19,12 +19,20 @@ import com.ask.exception.ResourceNotFoundException;
 import com.ask.mapper.UserMapper;
 import com.ask.repository.*;
 import com.ask.service.AuditService;
+import com.ask.service.FileStorageService;
+import com.ask.service.NotificationService;
 import com.ask.service.UserService;
+import com.ask.enums.NotificationType;
+import com.ask.enums.VerificationStatus;
+import com.ask.util.EncryptionUtil;
+import com.ask.dto.request.user.KycReviewRequest;
+import org.springframework.core.io.Resource;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,6 +64,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final AuditService auditService;
+    private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
+    private final EncryptionUtil encryptionUtil;
 
     @Override
     @Transactional
@@ -409,6 +420,13 @@ public class UserServiceImpl implements UserService {
     private UserResponse toResponse(User user) {
         UserResponse response = userMapper.toUserResponse(user);
         response.setPermissions(userPermissionRepository.findPermissionStringsByUserId(user.getId()));
+        if (user.getBankAccountEncrypted() != null && !user.getBankAccountEncrypted().isBlank()) {
+            try {
+                response.setBankAccount(encryptionUtil.decrypt(user.getBankAccountEncrypted()));
+            } catch (Exception e) {
+                log.error("Failed to decrypt bank account for user: {}", user.getEmail(), e);
+            }
+        }
         return response;
     }
 
@@ -470,6 +488,82 @@ public class UserServiceImpl implements UserService {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> getVerificationQueue(String currentUserEmail, int page, int size) {
+        User currentUser = getCurrentUser(currentUserEmail);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
+
+        Specification<User> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("verificationStatus"), VerificationStatus.PENDING));
+            if (!hasPlatformScope(currentUser)) {
+                addGeographyPredicate(predicates, root, criteriaBuilder, currentUser);
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<User> userPage = userRepository.findAll(spec, pageable);
+        List<UserResponse> content = userPage.getContent().stream().map(this::toResponse).toList();
+        return PageResponse.of(userPage, content);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse verifyUser(Long id, KycReviewRequest reviewRequest, String currentUserEmail) {
+        User currentUser = getCurrentUser(currentUserEmail);
+        ensureSuperAdminOrSystemAdmin(currentUser);
+
+        User user = getUser(id);
+        if (user.getVerificationStatus() != VerificationStatus.PENDING) {
+            throw new BusinessRuleException("User verification status is not PENDING");
+        }
+
+        user.setVerificationStatus(reviewRequest.getStatus());
+        User saved = userRepository.save(user);
+
+        // Notify user about KYC review results
+        try {
+            notificationService.sendNotification(
+                    user,
+                    NotificationType.KYC_REVIEW,
+                    "KYC Verification " + (reviewRequest.getStatus() == VerificationStatus.VERIFIED ? "Approved" : "Rejected"),
+                    "Your KYC details have been " + (reviewRequest.getStatus() == VerificationStatus.VERIFIED ? "approved" : "rejected. Reason: " + reviewRequest.getReason()) + ".",
+                    "USER",
+                    user.getId()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send KYC review notification to user: {}", user.getEmail(), e);
+        }
+
+        auditService.log(currentUser, "VERIFY_USER_KYC", "USER", user.getId(), null, null, null,
+                "KYC status set to " + reviewRequest.getStatus() + " for user " + user.getEmail() +
+                (reviewRequest.getReason() != null ? " Reason: " + reviewRequest.getReason() : ""));
+
+        return toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Resource getUserKycDocument(Long id, String currentUserEmail) {
+        User currentUser = getCurrentUser(currentUserEmail);
+        User user = getUser(id);
+        ensureUserVisible(currentUser, user);
+
+        if (user.getAadhaarDocUrl() == null || user.getAadhaarDocUrl().isBlank()) {
+            throw new ResourceNotFoundException("Aadhaar document", "id", id);
+        }
+
+        return fileStorageService.loadFileAsResource(user.getAadhaarDocUrl(), "kyc-docs");
+    }
+
+    private void ensureSuperAdminOrSystemAdmin(User user) {
+        String roleName = user.getRole().getName();
+        if (!RoleConstants.SUPER_ADMIN.equals(roleName) && !RoleConstants.SYSTEM_ADMIN.equals(roleName)) {
+            throw new BusinessRuleException("Only Super Admin and System Admin can perform KYC reviews.");
+        }
     }
 
     private record GeographyAssignment(State state, District district, Block block, Store store) {

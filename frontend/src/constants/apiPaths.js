@@ -12,7 +12,10 @@ export const API_PATHS = {
 
   // Users
   USERS: `${V1}/users`,
+
+  // Permissions
   PERMISSIONS: `${V1}/permissions`,
+  PERMISSION_REQUESTS: `${V1}/permission-requests`,
 
   // Geography
   STATES: `${V1}/states`,
@@ -25,6 +28,7 @@ export const API_PATHS = {
 
   // Patients
   PATIENTS: `${V1}/patients`,
+  HOSPITALS: `${V1}/hospitals`,
 
   // Health Cards
   HEALTH_CARDS: `${V1}/health-cards`,
@@ -38,6 +42,7 @@ export const API_PATHS = {
   TRANSFER_ORDERS: `${V1}/transfer-orders`,
   STOCK_STORE: `${V1}/stock/store`,
   STOCK_REQUESTS: `${V1}/stock-requests`,
+  STOCK_ADJUSTMENTS: `${V1}/stock/adjustments`,
 
   // Billing
   BILLS: `${V1}/bills`,
@@ -49,11 +54,18 @@ export const API_PATHS = {
   // Notifications
   NOTIFICATIONS: `${V1}/notifications`,
 
+  // Messages & Templates
+  MESSAGES: `${V1}/messages`,
+  MESSAGE_TEMPLATES: `${V1}/message-templates`,
+
   // Reports
   REPORTS: `${V1}/reports`,
 
   // Profile
   PROFILE: `${V1}/profile`,
+
+  // Dashboard
+  DASHBOARD: `${V1}/dashboard`,
 
   // System Config
   SYSTEM_CONFIG: `${V1}/system-config`,

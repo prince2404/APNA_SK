@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+
+  useEffect(() => {
+    const logoutMsg = localStorage.getItem('logout_message');
+    if (logoutMsg) {
+      toast.error(logoutMsg);
+      localStorage.removeItem('logout_message');
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

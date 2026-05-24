@@ -50,34 +50,59 @@ public class JwtTokenProvider {
      * @return a signed JWT access token string
      */
     public String generateAccessToken(Authentication authentication) {
+        return generateAccessToken(authentication, null);
+    }
+
+    /**
+     * Generates an access token for an authenticated user with a session fingerprint.
+     * Contains the user's email as the subject and optionally the session fingerprint.
+     *
+     * @param authentication the Spring Security authentication object
+     * @param tokenFingerprint the session fingerprint hash
+     * @return a signed JWT access token string
+     */
+    public String generateAccessToken(Authentication authentication, String tokenFingerprint) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpiryMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userDetails.getUsername()) // email is the username
                 .issuedAt(now)
-                .expiration(expiry)
-                .signWith(secretKey)
-                .compact();
+                .expiration(expiry);
+
+        if (tokenFingerprint != null) {
+            builder.claim("tokenFingerprint", tokenFingerprint);
+        }
+
+        return builder.signWith(secretKey).compact();
+    }
+
+    public String generateAccessTokenFromEmail(String email) {
+        return generateAccessTokenFromEmail(email, null);
     }
 
     /**
-     * Generates an access token directly from an email (used in token refresh flow).
+     * Generates an access token directly from an email and a session fingerprint.
      *
      * @param email the user's email
+     * @param tokenFingerprint the session fingerprint hash
      * @return a signed JWT access token string
      */
-    public String generateAccessTokenFromEmail(String email) {
+    public String generateAccessTokenFromEmail(String email, String tokenFingerprint) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpiryMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(email)
                 .issuedAt(now)
-                .expiration(expiry)
-                .signWith(secretKey)
-                .compact();
+                .expiration(expiry);
+
+        if (tokenFingerprint != null) {
+            builder.claim("tokenFingerprint", tokenFingerprint);
+        }
+
+        return builder.signWith(secretKey).compact();
     }
 
     /**
@@ -107,6 +132,20 @@ public class JwtTokenProvider {
      */
     public String getEmailFromToken(String token) {
         return parseToken(token).getPayload().getSubject();
+    }
+
+    /**
+     * Extracts the token fingerprint from a JWT token.
+     *
+     * @param token the JWT token string
+     * @return the token fingerprint, or null if not present
+     */
+    public String getTokenFingerprintFromToken(String token) {
+        try {
+            return parseToken(token).getPayload().get("tokenFingerprint", String.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

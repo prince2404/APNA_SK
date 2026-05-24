@@ -213,38 +213,35 @@ public class AuthServiceImpl implements AuthService {
         generateAndSendOtp(user, config);
     }
 
-    /**
-     * Refreshes access token using a valid refresh token.
-     */
     @Override
     @Transactional
     public LoginResponse refreshToken(RefreshTokenRequest request) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new InvalidRequestException(ErrorMessages.REFRESH_TOKEN_INVALID));
+                .orElseThrow(() -> new SessionRevokedException(ErrorMessages.REFRESH_TOKEN_INVALID));
 
         if (refreshToken.getIsRevoked() || refreshToken.isExpired()) {
             if (refreshToken.isExpired() && !refreshToken.getIsRevoked()) {
                 refreshToken.revoke();
                 refreshTokenRepository.save(refreshToken);
             }
-            throw new InvalidRequestException(ErrorMessages.REFRESH_TOKEN_INVALID);
+            throw new SessionRevokedException(ErrorMessages.REFRESH_TOKEN_INVALID);
         }
 
         // Check if session is revoked
         String fingerprint = EncryptionUtil.sha256Hash(request.getRefreshToken());
-        userSessionRepository.findByTokenFingerprint(fingerprint).ifPresent(session -> {
-            if (session.getIsRevoked()) {
-                throw new InvalidRequestException(ErrorMessages.REFRESH_TOKEN_REVOKED);
-            }
-            session.setLastActiveAt(LocalDateTime.now());
-            userSessionRepository.save(session);
-        });
+        UserSession session = userSessionRepository.findByTokenFingerprint(fingerprint)
+                .orElseThrow(() -> new SessionRevokedException(ErrorMessages.REFRESH_TOKEN_REVOKED));
+        if (session.getIsRevoked()) {
+            throw new SessionRevokedException(ErrorMessages.REFRESH_TOKEN_REVOKED);
+        }
+        session.setLastActiveAt(LocalDateTime.now());
+        userSessionRepository.save(session);
 
         User user = refreshToken.getUser();
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new InvalidRequestException(ErrorMessages.ACCOUNT_INACTIVE);
         }
-        String newAccessToken = jwtTokenProvider.generateAccessTokenFromEmail(user.getEmail());
+        String newAccessToken = jwtTokenProvider.generateAccessTokenFromEmail(user.getEmail(), fingerprint);
 
         return LoginResponse.builder()
                 .accessToken(newAccessToken)
@@ -327,8 +324,12 @@ public class AuthServiceImpl implements AuthService {
      * Completes the login flow by generating tokens and creating a session.
      */
     private LoginResponse completeLogin(User user, String ipAddress, String userAgent) {
-        String accessToken = jwtTokenProvider.generateAccessTokenFromEmail(user.getEmail());
+        // Revoke all existing active sessions for this user first
+        userSessionRepository.revokeByUserId(user.getId());
+
         String refreshTokenStr = jwtTokenProvider.generateRefreshToken(user.getEmail());
+        String tokenFingerprint = EncryptionUtil.sha256Hash(refreshTokenStr);
+        String accessToken = jwtTokenProvider.generateAccessTokenFromEmail(user.getEmail(), tokenFingerprint);
 
         // Save refresh token
         RefreshToken refreshToken = RefreshToken.builder()
@@ -341,7 +342,7 @@ public class AuthServiceImpl implements AuthService {
         // Create session record
         UserSession session = UserSession.builder()
                 .user(user)
-                .tokenFingerprint(EncryptionUtil.sha256Hash(refreshTokenStr))
+                .tokenFingerprint(tokenFingerprint)
                 .deviceInfo(userAgent)
                 .ipAddress(ipAddress)
                 .lastActiveAt(LocalDateTime.now())

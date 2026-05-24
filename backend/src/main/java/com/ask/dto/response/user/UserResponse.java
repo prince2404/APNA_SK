@@ -37,6 +37,9 @@ public class UserResponse {
     private String blockName;
     private Long storeId;
     private String storeName;
+    private String bankName;
+    private String bankIfsc;
+    private String bankAccount;
     private String aadhaarLastFour;
     private String panNumber;
     private VerificationStatus verificationStatus;

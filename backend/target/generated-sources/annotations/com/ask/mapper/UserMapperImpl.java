@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-05-04T22:59:16+0530",
+    date = "2026-05-24T16:57:45+0530",
     comments = "version: 1.6.3, compiler: javac, environment: Java 24.0.1 (Oracle Corporation)"
 )
 @Component
@@ -48,6 +48,8 @@ public class UserMapperImpl implements UserMapper {
         userResponse.dateOfBirth( user.getDateOfBirth() );
         userResponse.gender( user.getGender() );
         userResponse.address( user.getAddress() );
+        userResponse.bankName( user.getBankName() );
+        userResponse.bankIfsc( user.getBankIfsc() );
         userResponse.aadhaarLastFour( user.getAadhaarLastFour() );
         userResponse.panNumber( user.getPanNumber() );
         userResponse.verificationStatus( user.getVerificationStatus() );

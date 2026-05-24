@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, MapPin, Building2, Store, ShieldCheck,
   Package, Warehouse, Receipt, PieChart, Bell, MessageSquare,
-  Settings, ChevronLeft, ChevronRight, Heart, X, BarChart3,
+  Settings, ChevronLeft, ChevronRight, Heart, X, BarChart3, CreditCard, FileText,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useSidebarStore } from '@/store/useSidebarStore';
@@ -26,22 +26,27 @@ const menuSections = [
       { label: 'Districts', icon: Building2, path: ROUTES.DISTRICTS, permission: 'GEOGRAPHY:VIEW' },
       { label: 'Blocks', icon: MapPin, path: ROUTES.BLOCKS, permission: 'GEOGRAPHY:VIEW' },
       { label: 'Stores', icon: Store, path: ROUTES.STORES, permission: 'GEOGRAPHY:VIEW' },
+      { label: 'Hospitals', icon: Building2, path: ROUTES.HOSPITALS, alwaysShow: true },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { label: 'Patients', icon: Heart, path: ROUTES.PATIENTS, permission: 'PATIENTS:VIEW' },
+      { label: 'Patients', icon: Heart, path: ROUTES.PATIENTS, alwaysShow: true },
+      { label: 'Health Cards', icon: CreditCard, path: ROUTES.HEALTH_CARDS, alwaysShow: true },
       { label: 'Products', icon: Package, path: ROUTES.PRODUCTS, permission: 'PRODUCTS:VIEW' },
       { label: 'Inventory', icon: Warehouse, path: ROUTES.INVENTORY, permission: 'INVENTORY:VIEW' },
-      { label: 'Billing', icon: Receipt, path: ROUTES.BILLING, permission: 'BILLING:VIEW' },
+      { label: 'POS Billing', icon: Receipt, path: ROUTES.BILLING, alwaysShow: true },
+      { label: 'Invoices & Returns', icon: FileText, path: ROUTES.INVOICES, alwaysShow: true },
+      { label: 'Schemes', icon: ShieldCheck, path: ROUTES.SCHEMES, alwaysShow: true },
     ],
   },
   {
     title: 'Insights',
     items: [
-      { label: 'Commissions', icon: PieChart, path: ROUTES.COMMISSIONS, permission: 'COMMISSIONS:VIEW', roles: [ROLES.SUPER_ADMIN] },
+      { label: 'Commissions', icon: PieChart, path: ROUTES.COMMISSIONS, alwaysShow: true },
       { label: 'Reports', icon: BarChart3, path: ROUTES.REPORTS, permission: 'REPORTS:VIEW' },
+      { label: 'Messaging', icon: MessageSquare, path: ROUTES.MESSAGES, roles: [ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN] },
       { label: 'Notifications', icon: Bell, path: ROUTES.NOTIFICATIONS, alwaysShow: true },
     ],
   },

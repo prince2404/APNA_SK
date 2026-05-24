@@ -31,4 +31,10 @@ public interface UserService {
     UserResponse assignPermissions(Long id, PermissionAssignmentRequest request, String currentUserEmail);
 
     List<PermissionResponse> getAllPermissions();
+
+    PageResponse<UserResponse> getVerificationQueue(String currentUserEmail, int page, int size);
+
+    UserResponse verifyUser(Long id, com.ask.dto.request.user.KycReviewRequest request, String currentUserEmail);
+
+    org.springframework.core.io.Resource getUserKycDocument(Long id, String currentUserEmail);
 }
