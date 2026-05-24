@@ -15,7 +15,7 @@ const menuSections = [
   {
     title: 'Main',
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.DASHBOARD, alwaysShow: true },
+      { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.DASHBOARD, alwaysShow: true, end: true },
     ],
   },
   {
@@ -36,7 +36,7 @@ const menuSections = [
       { label: 'Health Cards', icon: CreditCard, path: ROUTES.HEALTH_CARDS, alwaysShow: true },
       { label: 'Products', icon: Package, path: ROUTES.PRODUCTS, permission: 'PRODUCTS:VIEW' },
       { label: 'Inventory', icon: Warehouse, path: ROUTES.INVENTORY, permission: 'INVENTORY:VIEW' },
-      { label: 'POS Billing', icon: Receipt, path: ROUTES.BILLING, alwaysShow: true },
+      { label: 'POS Billing', icon: Receipt, path: ROUTES.BILLING, alwaysShow: true, end: true },
       { label: 'Invoices & Returns', icon: FileText, path: ROUTES.INVOICES, alwaysShow: true },
       { label: 'Schemes', icon: ShieldCheck, path: ROUTES.SCHEMES, alwaysShow: true },
     ],
@@ -46,7 +46,7 @@ const menuSections = [
     items: [
       { label: 'Commissions', icon: PieChart, path: ROUTES.COMMISSIONS, alwaysShow: true },
       { label: 'Reports', icon: BarChart3, path: ROUTES.REPORTS, permission: 'REPORTS:VIEW' },
-      { label: 'Messaging', icon: MessageSquare, path: ROUTES.MESSAGES, roles: [ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN] },
+      { label: 'Messaging', icon: MessageSquare, path: ROUTES.MESSAGES, roles: [ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN], end: true },
       { label: 'Notifications', icon: Bell, path: ROUTES.NOTIFICATIONS, alwaysShow: true },
     ],
   },
@@ -110,6 +110,7 @@ export function Sidebar() {
                   <li key={item.path}>
                     <NavLink
                       to={item.path}
+                      end={item.end}
                       onClick={closeMobile}
                       className={({ isActive }) => cn(
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group',

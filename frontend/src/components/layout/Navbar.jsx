@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bell, LogOut, User, ChevronDown, Key, AlertCircle, CheckCircle2, Lock, Sun, Moon } from 'lucide-react';
+import { Menu, Bell, LogOut, User, ChevronDown, Key, AlertCircle, CheckCircle2, Lock } from 'lucide-react';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,20 +21,11 @@ export function Navbar() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const [darkMode, setDarkMode] = useState(
-    localStorage.getItem('theme') === 'dark' ||
-    (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  );
-
+  // Clean up any lingering dark mode class and storage entries
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+    document.documentElement.classList.remove('dark');
+    localStorage.removeItem('theme');
+  }, []);
   
   // Refs
   const profileDropdownRef = useRef(null);
@@ -157,15 +148,6 @@ export function Navbar() {
 
       {/* Right */}
       <div className="flex items-center gap-2">
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="p-2.5 rounded-lg text-surface-500 hover:bg-surface-100 transition-colors cursor-pointer"
-          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          {darkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5" />}
-        </button>
-
         {/* Notifications */}
         <div className="relative" ref={notificationDropdownRef}>
           <button
