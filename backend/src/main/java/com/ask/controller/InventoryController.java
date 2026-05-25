@@ -32,7 +32,7 @@ public class InventoryController {
     // ==================== CENTRAL WAREHOUSE STOCK ====================
 
     @PostMapping(ApiPaths.STOCK_CENTRAL + "/receipt")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SYSTEM_ADMIN') or hasRole('PHARMACIST')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_ADD_STOCK')")
     public ResponseEntity<ApiResponse<StockCentralResponse>> receiveCentralStock(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody StockReceiptRequest request) {
@@ -42,7 +42,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.STOCK_CENTRAL)
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SYSTEM_ADMIN') or hasRole('PHARMACIST')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<PageResponse<StockCentralResponse>>> getCentralStock(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -53,7 +53,7 @@ public class InventoryController {
     // ==================== TRANSFER ORDERS ====================
 
     @PostMapping(ApiPaths.TRANSFER_ORDERS)
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SYSTEM_ADMIN') or hasRole('PHARMACIST')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_TRANSFER_STOCK')")
     public ResponseEntity<ApiResponse<TransferOrderResponse>> createTransferOrder(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody TransferOrderRequest request) {
@@ -63,6 +63,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.TRANSFER_ORDERS)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<PageResponse<TransferOrderResponse>>> getTransferOrders(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
@@ -72,6 +73,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.TRANSFER_ORDERS + "/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<TransferOrderResponse>> getTransferOrderById(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -80,6 +82,7 @@ public class InventoryController {
     }
 
     @PatchMapping(ApiPaths.TRANSFER_ORDERS + "/{id}/confirm")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_TRANSFER_STOCK')")
     public ResponseEntity<ApiResponse<TransferOrderResponse>> confirmTransferReceipt(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -88,7 +91,7 @@ public class InventoryController {
     }
 
     @PatchMapping(ApiPaths.TRANSFER_ORDERS + "/{id}/cancel")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SYSTEM_ADMIN') or hasRole('PHARMACIST')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_TRANSFER_STOCK')")
     public ResponseEntity<ApiResponse<TransferOrderResponse>> cancelTransferOrder(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -99,6 +102,7 @@ public class InventoryController {
     // ==================== STORE STOCK LEVELS & ALERTS ====================
 
     @GetMapping(ApiPaths.STOCK_STORE)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<PageResponse<StockStoreResponse>>> getStoreStock(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -112,6 +116,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.STOCK_STORE + "/alerts/low")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<List<StockStoreResponse>>> getLowStockAlerts(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId) {
@@ -120,6 +125,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.STOCK_STORE + "/alerts/expiry")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<List<StockStoreResponse>>> getExpiringStockAlerts(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -131,7 +137,7 @@ public class InventoryController {
     // ==================== STOCK ADJUSTMENTS ====================
 
     @PostMapping(ApiPaths.STOCK_ADJUSTMENTS)
-    @PreAuthorize("hasRole('RECEPTIONIST') or hasRole('BLOCK_ADMIN') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_ADJUST_STOCK')")
     public ResponseEntity<ApiResponse<StockAdjustmentResponse>> adjustStock(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody StockAdjustmentRequest request) {
@@ -141,6 +147,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.STOCK_ADJUSTMENTS)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<PageResponse<StockAdjustmentResponse>>> getStockAdjustments(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -153,7 +160,7 @@ public class InventoryController {
     // ==================== STOCK REQUESTS ====================
 
     @PostMapping(ApiPaths.STOCK_REQUESTS)
-    @PreAuthorize("hasRole('RECEPTIONIST') or hasRole('BLOCK_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_TRANSFER_STOCK')")
     public ResponseEntity<ApiResponse<StockRequestResponse>> createStockRequest(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody StockRequestRequest request) {
@@ -163,6 +170,7 @@ public class InventoryController {
     }
 
     @GetMapping(ApiPaths.STOCK_REQUESTS)
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_VIEW_STOCK')")
     public ResponseEntity<ApiResponse<PageResponse<StockRequestResponse>>> getStockRequests(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -174,7 +182,7 @@ public class InventoryController {
     }
 
     @PatchMapping(ApiPaths.STOCK_REQUESTS + "/{id}/review")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SYSTEM_ADMIN') or hasRole('PHARMACIST')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_INVENTORY_TRANSFER_STOCK')")
     public ResponseEntity<ApiResponse<StockRequestResponse>> reviewStockRequest(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,

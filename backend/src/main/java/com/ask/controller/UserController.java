@@ -37,7 +37,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(ApiPaths.USERS)
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_CREATE')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_CREATE_USER')")
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UserCreateRequest request) {
@@ -47,7 +47,7 @@ public class UserController {
     }
 
     @GetMapping(ApiPaths.USERS)
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_USERS')")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String search,
@@ -61,7 +61,7 @@ public class UserController {
     }
 
     @GetMapping(ApiPaths.USERS + "/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_USERS')")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -70,7 +70,7 @@ public class UserController {
     }
 
     @PutMapping(ApiPaths.USERS + "/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_EDIT')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_EDIT_USER')")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
@@ -81,7 +81,7 @@ public class UserController {
     }
 
     @PatchMapping(ApiPaths.USERS + "/{id}/deactivate")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_DEACTIVATE_USER')")
     public ResponseEntity<ApiResponse<Void>> deactivateUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -91,7 +91,7 @@ public class UserController {
     }
 
     @PatchMapping(ApiPaths.USERS + "/{id}/reactivate")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_REACTIVATE_USER')")
     public ResponseEntity<ApiResponse<Void>> reactivateUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -101,7 +101,7 @@ public class UserController {
     }
 
     @PutMapping(ApiPaths.USERS + "/{id}/permissions")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_EDIT')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_EDIT_USER')")
     public ResponseEntity<ApiResponse<UserResponse>> assignPermissions(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
@@ -112,13 +112,13 @@ public class UserController {
     }
 
     @GetMapping(ApiPaths.PERMISSIONS)
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW') or hasAuthority('PERM_USERS_EDIT')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_USERS') or hasAuthority('PERM_USERS_EDIT_USER')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getPermissions() {
         return ResponseEntity.ok(ApiResponse.success(userService.getAllPermissions(), ApiPaths.PERMISSIONS));
     }
 
     @GetMapping(ApiPaths.USERS + "/verification-queue")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_USERS')")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getVerificationQueue(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
@@ -138,7 +138,7 @@ public class UserController {
     }
 
     @GetMapping(ApiPaths.USERS + "/{id}/kyc/document")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_USERS')")
     public ResponseEntity<Resource> downloadUserKycDocument(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {

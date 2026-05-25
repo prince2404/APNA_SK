@@ -22,7 +22,6 @@ export default function UserDetailPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [permissions, setPermissions] = useState([]);
   const [allPermissions, setAllPermissions] = useState([]);
   const [selectedPerms, setSelectedPerms] = useState(new Set());
   const [showPerms, setShowPerms] = useState(false);
@@ -34,17 +33,23 @@ export default function UserDetailPage() {
       const u = r.data.data;
       setUser(u);
       setForm({ fullName: u.fullName, email: u.email, phone: u.phone, address: u.address || '', gender: u.gender || '', dateOfBirth: u.dateOfBirth || '' });
-      setPermissions(u.permissions || []);
-      setSelectedPerms(new Set(u.permissionIds || []));
     }).catch(e => { toast.error(getErrorMessage(e)); navigate(ROUTES.USERS); })
     .finally(() => setLoading(false));
   }, [id, navigate]);
 
   useEffect(() => {
-    if (isSuperAdmin || hasPermission('USERS:EDIT')) {
-      userApi.getPermissions().then(r => setAllPermissions(r.data.data || [])).catch(() => {});
+    if (user && allPermissions.length > 0) {
+      const userPermStrings = new Set(user.permissions || []);
+      const matchedIds = allPermissions
+        .filter(p => userPermStrings.has(p.code))
+        .map(p => p.id);
+      setSelectedPerms(new Set(matchedIds));
     }
-  }, [isSuperAdmin, hasPermission]);
+  }, [user, allPermissions]);
+
+  useEffect(() => {
+    userApi.getPermissions().then(r => setAllPermissions(r.data.data || [])).catch(() => {});
+  }, []);
 
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -132,10 +137,10 @@ export default function UserDetailPage() {
                 </span>
               </div>
               <div className="flex gap-3 pt-2">
-                {(isSuperAdmin || hasPermission('USERS:EDIT')) && (
+                {(isSuperAdmin || hasPermission('USERS:EDIT_USER')) && (
                   <Button variant="secondary" onClick={() => setEditing(true)}><Edit3 className="w-4 h-4" /> Edit</Button>
                 )}
-                {(isSuperAdmin || hasPermission('USERS:EDIT')) && (
+                {(isSuperAdmin || hasPermission('USERS:EDIT_USER')) && (
                   <Button variant="outline" onClick={() => setShowPerms(!showPerms)}><Shield className="w-4 h-4" /> {showPerms ? 'Hide' : 'Manage'} Permissions</Button>
                 )}
               </div>
@@ -176,7 +181,7 @@ export default function UserDetailPage() {
                   {perms.map(p => (
                     <label key={p.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-surface-50 px-2 py-1 rounded">
                       <input type="checkbox" checked={selectedPerms.has(p.id)} onChange={() => togglePerm(p.id)} className="rounded border-surface-300 text-primary-600 focus:ring-primary-500" />
-                      <span className="text-surface-700">{p.action}</span>
+                      <span className="text-surface-700">{p.description || p.action}</span>
                     </label>
                   ))}
                 </div>

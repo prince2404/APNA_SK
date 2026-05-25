@@ -17,6 +17,7 @@ import com.ask.exception.GeographicScopeException;
 import com.ask.exception.InvalidRequestException;
 import com.ask.exception.ResourceNotFoundException;
 import com.ask.mapper.UserMapper;
+import org.springframework.security.access.AccessDeniedException;
 import com.ask.repository.*;
 import com.ask.service.AuditService;
 import com.ask.service.FileStorageService;
@@ -86,6 +87,7 @@ public class UserServiceImpl implements UserService {
 
         GeographyAssignment geography = resolveGeography(
                 targetRole, request.getStateId(), request.getDistrictId(), request.getBlockId(), request.getStoreId());
+        validateStoreStaffAssignment(currentUser, request.getStoreId(), null);
         ensureGeographyInScope(currentUser, geography);
 
         User user = User.builder()
@@ -158,6 +160,7 @@ public class UserServiceImpl implements UserService {
 
         GeographyAssignment geography = resolveGeography(
                 targetRole, request.getStateId(), request.getDistrictId(), request.getBlockId(), request.getStoreId());
+        validateStoreStaffAssignment(currentUser, request.getStoreId(), user.getStore() != null ? user.getStore().getId() : null);
         ensureGeographyInScope(currentUser, geography);
 
         user.setFullName(request.getFullName());
@@ -185,7 +188,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deactivateUser(Long id, String currentUserEmail) {
         User currentUser = getCurrentUser(currentUserEmail);
-        ensureSuperAdmin(currentUser);
+        boolean hasPerm = userPermissionRepository.findPermissionStringsByUserId(currentUser.getId()).contains("USERS:DEACTIVATE_USER");
+        if (!RoleConstants.SUPER_ADMIN.equals(currentUser.getRole().getName()) && !hasPerm) {
+            throw new BusinessRuleException("Only Super Admin or users with USERS:DEACTIVATE_USER permission can deactivate users");
+        }
         User user = getUser(id);
         if (currentUser.getId().equals(user.getId())) {
             throw new BusinessRuleException(ErrorMessages.CANNOT_DEACTIVATE_SELF);
@@ -200,7 +206,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void reactivateUser(Long id, String currentUserEmail) {
         User currentUser = getCurrentUser(currentUserEmail);
-        ensureSuperAdmin(currentUser);
+        boolean hasPerm = userPermissionRepository.findPermissionStringsByUserId(currentUser.getId()).contains("USERS:REACTIVATE_USER");
+        if (!RoleConstants.SUPER_ADMIN.equals(currentUser.getRole().getName()) && !hasPerm) {
+            throw new BusinessRuleException("Only Super Admin or users with USERS:REACTIVATE_USER permission can reactivate users");
+        }
         User user = getUser(id);
         user.setStatus(UserStatus.ACTIVE);
         user.setFailedLoginAttempts(0);
@@ -230,6 +239,16 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(userMapper::toPermissionResponse)
                 .toList();
+    }
+
+    private void validateStoreStaffAssignment(User currentUser, Long targetStoreId, Long existingStoreId) {
+        if (targetStoreId != null && (existingStoreId == null || !targetStoreId.equals(existingStoreId))) {
+            boolean isSuper = RoleConstants.SUPER_ADMIN.equals(currentUser.getRole().getName());
+            boolean hasAssignPerm = userPermissionRepository.findPermissionStringsByUserId(currentUser.getId()).contains("STORES:ASSIGN_STAFF");
+            if (!isSuper && !hasAssignPerm) {
+                throw new AccessDeniedException("Access is denied: missing STORES:ASSIGN_STAFF permission to assign user to a store");
+            }
+        }
     }
 
     private void replacePermissions(User user, User grantedBy, List<Long> permissionIds) {

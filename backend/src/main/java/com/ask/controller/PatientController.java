@@ -28,7 +28,7 @@ public class PatientController {
     private final PatientService patientService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_PATIENTS_CREATE_PATIENT')")
     public ResponseEntity<ApiResponse<PatientResponse>> registerPatient(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody PatientRequest request) {
@@ -37,7 +37,7 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_PATIENTS_EDIT_PATIENT')")
     public ResponseEntity<ApiResponse<PatientResponse>> updatePatient(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
@@ -47,7 +47,7 @@ public class PatientController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_PATIENTS_VIEW_PATIENTS')")
     public ResponseEntity<ApiResponse<PageResponse<PatientResponse>>> getPatients(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String search,
@@ -59,7 +59,7 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_PATIENTS_VIEW_PATIENTS')")
     public ResponseEntity<ApiResponse<PatientResponse>> getPatientById(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -68,7 +68,7 @@ public class PatientController {
     }
 
     @PostMapping(value = ApiPaths.PATIENTS_BULK_UPLOAD, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_PATIENTS_BULK_UPLOAD')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> bulkUploadPatients(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam("file") MultipartFile file) {

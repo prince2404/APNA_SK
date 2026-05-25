@@ -28,7 +28,7 @@ public class CommissionController {
     private final CommissionService commissionService;
 
     @GetMapping(ApiPaths.COMMISSION_CONFIG)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_COMMISSIONS_VIEW_COMMISSIONS')")
     public ResponseEntity<ApiResponse<List<CommissionConfigResponse>>> getConfigs(
             @AuthenticationPrincipal UserDetails userDetails) {
         List<CommissionConfigResponse> response = commissionService.getConfigs(userDetails.getUsername());
@@ -36,7 +36,7 @@ public class CommissionController {
     }
 
     @PutMapping(ApiPaths.COMMISSION_CONFIG)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_COMMISSIONS_EDIT_COMMISSION_PERCENTAGE')")
     public ResponseEntity<ApiResponse<CommissionConfigResponse>> updateConfig(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CommissionConfigRequest request) {
@@ -45,7 +45,7 @@ public class CommissionController {
     }
 
     @GetMapping(ApiPaths.COMMISSIONS)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_COMMISSIONS_VIEW_COMMISSIONS')")
     public ResponseEntity<ApiResponse<PageResponse<CommissionEntry>>> getCommissions(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long userId,
@@ -59,7 +59,7 @@ public class CommissionController {
     }
 
     @GetMapping(ApiPaths.COMMISSIONS + "/summary")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_COMMISSIONS_VIEW_COMMISSIONS')")
     public ResponseEntity<ApiResponse<List<CommissionSummaryResponse>>> getCommissionSummary(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam String month) {

@@ -21,11 +21,11 @@ const menuSections = [
   {
     title: 'Management',
     items: [
-      { label: 'Users', icon: Users, path: ROUTES.USERS, permission: 'USERS:VIEW' },
-      { label: 'States', icon: MapPin, path: ROUTES.STATES, permission: 'GEOGRAPHY:VIEW' },
-      { label: 'Districts', icon: Building2, path: ROUTES.DISTRICTS, permission: 'GEOGRAPHY:VIEW' },
-      { label: 'Blocks', icon: MapPin, path: ROUTES.BLOCKS, permission: 'GEOGRAPHY:VIEW' },
-      { label: 'Stores', icon: Store, path: ROUTES.STORES, permission: 'GEOGRAPHY:VIEW' },
+      { label: 'Users', icon: Users, path: ROUTES.USERS, permission: 'USERS:VIEW_USERS' },
+      { label: 'States', icon: MapPin, path: ROUTES.STATES, permission: 'GEOGRAPHY:VIEW_STATES' },
+      { label: 'Districts', icon: Building2, path: ROUTES.DISTRICTS, permission: 'GEOGRAPHY:VIEW_DISTRICTS' },
+      { label: 'Blocks', icon: MapPin, path: ROUTES.BLOCKS, permission: 'GEOGRAPHY:VIEW_BLOCKS' },
+      { label: 'Stores', icon: Store, path: ROUTES.STORES, permission: 'STORES:VIEW_STORES' },
       { label: 'Hospitals', icon: Building2, path: ROUTES.HOSPITALS, alwaysShow: true },
     ],
   },
@@ -34,8 +34,8 @@ const menuSections = [
     items: [
       { label: 'Patients', icon: Heart, path: ROUTES.PATIENTS, alwaysShow: true },
       { label: 'Health Cards', icon: CreditCard, path: ROUTES.HEALTH_CARDS, alwaysShow: true },
-      { label: 'Products', icon: Package, path: ROUTES.PRODUCTS, permission: 'PRODUCTS:VIEW' },
-      { label: 'Inventory', icon: Warehouse, path: ROUTES.INVENTORY, permission: 'INVENTORY:VIEW' },
+      { label: 'Products', icon: Package, path: ROUTES.PRODUCTS, alwaysShow: true },
+      { label: 'Inventory', icon: Warehouse, path: ROUTES.INVENTORY, permission: 'INVENTORY:VIEW_STOCK' },
       { label: 'POS Billing', icon: Receipt, path: ROUTES.BILLING, alwaysShow: true, end: true },
       { label: 'Invoices & Returns', icon: FileText, path: ROUTES.INVOICES, alwaysShow: true },
       { label: 'Schemes', icon: ShieldCheck, path: ROUTES.SCHEMES, alwaysShow: true },
@@ -45,7 +45,7 @@ const menuSections = [
     title: 'Insights',
     items: [
       { label: 'Commissions', icon: PieChart, path: ROUTES.COMMISSIONS, alwaysShow: true },
-      { label: 'Reports', icon: BarChart3, path: ROUTES.REPORTS, permission: 'REPORTS:VIEW' },
+      { label: 'Reports', icon: BarChart3, path: ROUTES.REPORTS, permission: 'REPORTS:VIEW_REPORTS' },
       { label: 'Messaging', icon: MessageSquare, path: ROUTES.MESSAGES, roles: [ROLES.SUPER_ADMIN, ROLES.SYSTEM_ADMIN], end: true },
       { label: 'Notifications', icon: Bell, path: ROUTES.NOTIFICATIONS, alwaysShow: true },
     ],

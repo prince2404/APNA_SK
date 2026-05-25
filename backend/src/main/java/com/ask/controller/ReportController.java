@@ -27,7 +27,7 @@ public class ReportController {
 
     // --- 1. Sales Report ---
     @GetMapping("/sales")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSalesReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -38,7 +38,7 @@ public class ReportController {
     }
 
     @GetMapping("/sales/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportSalesReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -53,7 +53,7 @@ public class ReportController {
 
     // --- 2. Stock Report ---
     @GetMapping("/stock")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStockReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -63,7 +63,7 @@ public class ReportController {
     }
 
     @GetMapping("/stock/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportStockReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -77,7 +77,7 @@ public class ReportController {
 
     // --- 3. Commission Report ---
     @GetMapping("/commission")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCommissionReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String month,
@@ -87,7 +87,7 @@ public class ReportController {
     }
 
     @GetMapping("/commission/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportCommissionReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String month,
@@ -101,7 +101,7 @@ public class ReportController {
 
     // --- 4. Patient Report ---
     @GetMapping("/patient")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPatientReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long blockId,
@@ -113,7 +113,7 @@ public class ReportController {
     }
 
     @GetMapping("/patient/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportPatientReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long blockId,
@@ -129,7 +129,7 @@ public class ReportController {
 
     // --- 5. Bill Report ---
     @GetMapping("/bill")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getBillReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -141,7 +141,7 @@ public class ReportController {
     }
 
     @GetMapping("/bill/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportBillReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -157,7 +157,7 @@ public class ReportController {
 
     // --- 6. Expiry Report ---
     @GetMapping("/expiry")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getExpiryReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "30") Integer days) {
@@ -166,7 +166,7 @@ public class ReportController {
     }
 
     @GetMapping("/expiry/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportExpiryReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "30") Integer days) {
@@ -179,7 +179,7 @@ public class ReportController {
 
     // --- 7. User Activity Report ---
     @GetMapping("/activity")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_ACTIVITY_LOG')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getUserActivityReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long userId,
@@ -191,7 +191,7 @@ public class ReportController {
     }
 
     @GetMapping("/activity/export")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_USERS_VIEW_ACTIVITY_LOG')")
     public ResponseEntity<byte[]> exportUserActivityReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long userId,
@@ -207,7 +207,7 @@ public class ReportController {
 
     // --- 8. Revenue Report ---
     @GetMapping("/revenue")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRevenueReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long stateId,
@@ -219,7 +219,7 @@ public class ReportController {
     }
 
     @GetMapping("/revenue/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportRevenueReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long stateId,
@@ -235,7 +235,7 @@ public class ReportController {
 
     // --- 9. Low Stock Report ---
     @GetMapping("/low-stock")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_VIEW_REPORTS')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getLowStockReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId) {
@@ -244,7 +244,7 @@ public class ReportController {
     }
 
     @GetMapping("/low-stock/export")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_REPORTS_DOWNLOAD_REPORTS')")
     public ResponseEntity<byte[]> exportLowStockReport(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId) {

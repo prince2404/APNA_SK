@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -21,6 +22,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_NOTIFICATIONS_VIEW_NOTIFICATIONS')")
     public ResponseEntity<ApiResponse<PageResponse<NotificationResponse>>> getNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
@@ -31,6 +33,7 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_NOTIFICATIONS_VIEW_NOTIFICATIONS')")
     public ResponseEntity<ApiResponse<Long>> getUnreadCount(
             @AuthenticationPrincipal UserDetails userDetails) {
         long count = notificationService.getUnreadCount(userDetails.getUsername());
@@ -38,6 +41,7 @@ public class NotificationController {
     }
 
     @PatchMapping("/{id}/read")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_NOTIFICATIONS_VIEW_NOTIFICATIONS')")
     public ResponseEntity<ApiResponse<Void>> markAsRead(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -47,6 +51,7 @@ public class NotificationController {
     }
 
     @PatchMapping("/read-all")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_NOTIFICATIONS_VIEW_NOTIFICATIONS')")
     public ResponseEntity<ApiResponse<Void>> markAllAsRead(
             @AuthenticationPrincipal UserDetails userDetails) {
         notificationService.markAllAsRead(userDetails.getUsername());

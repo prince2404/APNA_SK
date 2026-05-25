@@ -26,7 +26,7 @@ public class BillController {
     private final BillService billService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_BILLING_CREATE_BILL')")
     public ResponseEntity<ApiResponse<BillResponse>> createBill(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody BillRequest request) {
@@ -35,7 +35,7 @@ public class BillController {
     }
 
     @GetMapping("/number/{billNumber}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_BILLING_VIEW_BILLS')")
     public ResponseEntity<ApiResponse<BillResponse>> getBillByNumber(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String billNumber) {
@@ -44,7 +44,7 @@ public class BillController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_BILLING_VIEW_BILLS')")
     public ResponseEntity<ApiResponse<BillResponse>> getBillById(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
@@ -53,7 +53,7 @@ public class BillController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_BILLING_VIEW_BILLS')")
     public ResponseEntity<ApiResponse<PageResponse<BillResponse>>> getBills(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) Long storeId,
@@ -64,7 +64,7 @@ public class BillController {
     }
 
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_BILLING_CANCEL_BILL')")
     public ResponseEntity<ApiResponse<BillResponse>> cancelBill(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
@@ -74,7 +74,7 @@ public class BillController {
     }
 
     @GetMapping("/{id}/pdf")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'SYSTEM_ADMIN', 'STATE_ADMIN', 'DISTRICT_ADMIN', 'BLOCK_ADMIN', 'RECEPTIONIST', 'VOLUNTEER')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasAuthority('PERM_BILLING_VIEW_BILLS')")
     public ResponseEntity<byte[]> generateBillPdf(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {

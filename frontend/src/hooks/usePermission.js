@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ROLES } from '@/constants/roles';
 
@@ -12,22 +12,22 @@ export function usePermission() {
   const roleName = user?.roleName;
 
   /** Check if user has a specific permission code like "USERS:VIEW" */
-  const hasPermission = (permCode) => {
+  const hasPermission = useCallback((permCode) => {
     if (roleName === ROLES.SUPER_ADMIN) return true;
     return permissions.has(permCode);
-  };
+  }, [roleName, permissions]);
 
   /** Check if user has any of the given permissions */
-  const hasAnyPermission = (...permCodes) => {
+  const hasAnyPermission = useCallback((...permCodes) => {
     if (roleName === ROLES.SUPER_ADMIN) return true;
     return permCodes.some((code) => permissions.has(code));
-  };
+  }, [roleName, permissions]);
 
   /** Check if user has a specific role */
-  const hasRole = (role) => roleName === role;
+  const hasRole = useCallback((role) => roleName === role, [roleName]);
 
   /** Check if user has any of the given roles */
-  const hasAnyRole = (...roles) => roles.includes(roleName);
+  const hasAnyRole = useCallback((...roles) => roles.includes(roleName), [roleName]);
 
   /** Check if user is Super Admin */
   const isSuperAdmin = roleName === ROLES.SUPER_ADMIN;
