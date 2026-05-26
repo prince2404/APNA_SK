@@ -1,624 +1,189 @@
-# Apna Swasthya Kendra — Production Deployment Guide
+# Production Deployment Guide — Apna Swasthya Kendra (ASK)
 
-This guide takes you from a working local project to a live application on the internet, step by step.
-
----
-
-## 1. Recommended Platforms
-
-| Component | Platform | Why |
-|-----------|----------|-----|
-| **Backend** (Spring Boot JAR) | [Railway](https://railway.com) | Free tier includes 500 hours/month, auto-deploys from GitHub, built-in Java support, easy env vars |
-| **Database** (MySQL) | [Railway](https://railway.com) | One-click MySQL setup, same network as backend (fast), free tier included |
-| **Frontend** (React build) | [Vercel](https://vercel.com) | Free forever for personal projects, instant global CDN, auto-deploys from GitHub, built for React |
-| **File Storage** (documents/images) | [Cloudinary](https://cloudinary.com) | Free tier: 25GB storage + 25GB bandwidth, easy API, image transformations built-in |
-| **Domain Name** | [Namecheap](https://namecheap.com) or [GoDaddy](https://godaddy.com) | Domains start at ₹199/year for `.in`, good DNS management |
-
-> **Total cost to start: ₹0** (all platforms have free tiers that are sufficient for launch)
+This guide takes you through the step-by-step process of deploying the complete ASK application (Frontend, Backend, and Database) to production using free-tier services. 
 
 ---
 
-## 2. What You Need Before Starting
-
-### Accounts to Create (all free)
-
-| # | Account | Sign Up Link | What it's for |
-|---|---------|-------------|---------------|
-| 1 | **GitHub** | https://github.com/signup | Host your code, auto-deploy to Railway + Vercel |
-| 2 | **Railway** | https://railway.com | Backend server + MySQL database |
-| 3 | **Vercel** | https://vercel.com/signup | Frontend hosting |
-| 4 | **Gmail** | You already have this | SMTP email for sending OTPs |
-
-### Before You Start Checklist
-
-- [ ] Your code is pushed to a **GitHub repository** (private is fine)
-- [ ] You have a **Gmail App Password** for SMTP (not your regular password)
-- [ ] You have decided on a **Super Admin email and password** for production
-
-### How to Get a Gmail App Password
-
-1. Go to https://myaccount.google.com/security
-2. Enable **2-Step Verification** if not already enabled
-3. Go to https://myaccount.google.com/apppasswords
-4. Select **Mail** → **Other** → type "ASK ERP"
-5. Click **Generate** → copy the 16-character password
-6. This is your `MAIL_PASSWORD` for production
-
----
-
-## 3. Prepare the Project for Deployment
-
-### 3.1 Push Code to GitHub
-
-If you haven't already:
-
-```bash
-cd c:\APNA_SK
-git init
-git add .
-git commit -m "Initial commit - ASK ERP"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/APNA_SK.git
-git push -u origin main
-```
-
-### 3.2 Add a Production CORS Configuration
-
-Your backend currently has no CORS config (works locally because Vite proxy handles it). In production, frontend and backend are on different domains, so you **must** add CORS support.
-
-Create this file:
-
-**`backend/src/main/java/com/ask/config/CorsConfig.java`**
-
-```java
-package com.ask.config;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
-
-@Configuration
-public class CorsConfig {
-
-    @Value("${ask.cors.allowed-origins:http://localhost:5173}")
-    private String allowedOrigins;
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-        config.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
-}
-```
-
-Then update `SecurityConfig.java` to enable CORS:
-
-Add this import at the top:
-```java
-import org.springframework.web.cors.CorsConfigurationSource;
-```
-
-Add this field:
-```java
-private final CorsConfigurationSource corsConfigurationSource;
-```
-
-Add this line inside `filterChain()`, right after `.csrf(AbstractHttpConfigurer::disable)`:
-```java
-.cors(cors -> cors.configurationSource(corsConfigurationSource))
-```
-
-Add the environment variable to your `.env.example`:
-```
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-```
-
-And add this to `application.properties`:
-```
-ask.cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:5173}
-```
-
-### 3.3 Add Production Logging Profile
-
-Create **`backend/src/main/resources/application-prod.properties`**:
-
-```properties
-# =============================================================================
-# ASK — Production Profile
-# =============================================================================
-
-# Reduce logging in production
-logging.level.root=WARN
-logging.level.com.ask=INFO
-logging.level.org.springframework.security=WARN
-logging.level.org.hibernate.SQL=WARN
-
-# Show SQL in production? No.
-spring.jpa.show-sql=false
-```
-
-### 3.4 Build the Backend JAR (for testing locally)
-
-```bash
-cd backend
-mvn clean package -DskipTests
-```
-
-This creates `backend/target/apna-swasthya-kendra-1.0.0.jar`.  
-Railway does this automatically, but this verifies your project builds.
-
-### 3.5 Build the Frontend (for testing locally)
-
-```bash
-cd frontend
-bun run build
-```
-
-This creates the `frontend/dist/` folder.  
-Vercel does this automatically, but this verifies your project builds.
-
----
-
-## 4. Deploy the Database (Railway)
-
-### Step 1: Create a Railway Project
-
-1. Go to https://railway.com and log in
-2. Click **"New Project"**
-3. Select **"Empty Project"**
-4. Name it `ask-production`
-
-### Step 2: Add MySQL Database
-
-1. Inside your project, click **"+ New"** → **"Database"** → **"MySQL"**
-2. Railway instantly creates a MySQL instance
-3. Click on the MySQL service → go to **"Variables"** tab
-4. You will see these auto-generated variables:
-
-| Variable | Example Value |
-|----------|---------------|
-| `MYSQL_HOST` | `roundhouse.proxy.rlwy.net` |
-| `MYSQL_PORT` | `39145` |
-| `MYSQL_DATABASE` | `railway` |
-| `MYSQL_USER` | `root` |
-| `MYSQL_PASSWORD` | `aBcDeFgHiJkLmNoP` |
-| `MYSQL_URL` | `mysql://root:aBcD...@roundhouse.proxy.rlwy.net:39145/railway` |
-
-5. **Copy these values** — you need them for the backend deployment.
-
-### Step 3: Build Your Production DB_URL
-
-Using the values above, construct your `DB_URL`:
-
-```
-jdbc:mysql://MYSQL_HOST:MYSQL_PORT/MYSQL_DATABASE?useSSL=true&serverTimezone=Asia/Kolkata
-```
-
-Example:
-```
-jdbc:mysql://roundhouse.proxy.rlwy.net:39145/railway?useSSL=true&serverTimezone=Asia/Kolkata
-```
-
-> **Note:** Flyway will automatically create all tables and seed data on the first backend startup. You do NOT need to run any SQL manually.
-
----
-
-## 5. Deploy the Backend (Railway)
-
-### Step 1: Add Backend Service
-
-1. In your Railway project, click **"+ New"** → **"GitHub Repo"**
-2. Connect your GitHub account if not already connected
-3. Select your `APNA_SK` repository
-4. Railway will detect the project — it may ask which folder to use
-
-### Step 2: Configure the Build
-
-1. Click on the newly created service → go to **"Settings"** tab
-2. Set these build settings:
-
-| Setting | Value |
-|---------|-------|
-| **Root Directory** | `backend` |
-| **Build Command** | `mvn clean package -DskipTests` |
-| **Start Command** | `java -jar -Dspring.profiles.active=prod target/apna-swasthya-kendra-1.0.0.jar` |
-
-### Step 3: Set Environment Variables
-
-Go to the **"Variables"** tab and add every variable:
-
-| Variable | Value |
-|----------|-------|
-| `DB_URL` | `jdbc:mysql://MYSQL_HOST:MYSQL_PORT/MYSQL_DATABASE?useSSL=true&serverTimezone=Asia/Kolkata` |
-| `DB_USERNAME` | Your Railway MySQL username (from step 4) |
-| `DB_PASSWORD` | Your Railway MySQL password (from step 4) |
-| `JWT_SECRET` | A random 64+ character string (generate at https://randomkeygen.com) |
-| `AES_SECRET_KEY` | A random exactly 32 character string |
-| `MAIL_HOST` | `smtp.gmail.com` |
-| `MAIL_PORT` | `587` |
-| `MAIL_USERNAME` | Your Gmail address |
-| `MAIL_PASSWORD` | Your Gmail App Password (the 16-char one) |
-| `SUPER_ADMIN_EMAIL` | The admin email for production |
-| `SUPER_ADMIN_PASSWORD` | A strong admin password |
-| `CORS_ALLOWED_ORIGINS` | `https://your-app.vercel.app` (update after deploying frontend) |
-| `SPRING_PROFILES_ACTIVE` | `prod` |
-
-> **Tip:** Generate `JWT_SECRET` by running this in your terminal:
-> ```bash
-> node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-> ```
->
-> Generate `AES_SECRET_KEY` (exactly 32 chars):
-> ```bash
-> node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
-> ```
-
-### Step 4: Deploy
-
-1. Click **"Deploy"** — Railway builds and deploys automatically
-2. Wait 2-3 minutes for the build and startup
-
-### Step 5: Get Your Backend URL
-
-1. Go to **"Settings"** → **"Networking"**
-2. Click **"Generate Domain"**
-3. Railway gives you a URL like: `ask-production-backend.up.railway.app`
-4. **Your production API base URL is:** `https://ask-production-backend.up.railway.app/api`
-
-### Step 6: Verify Backend is Running
-
-Open this in your browser:
-```
-https://YOUR-BACKEND.up.railway.app/api/actuator/health
-```
-
-If you see a response (even a 401), the server is running.
-
-### Step 7: Check Logs
-
-1. In Railway, click on your backend service
-2. Go to the **"Logs"** tab
-3. Look for:
-   - `Started AskApplication in X seconds` → ✅ Backend started
-   - `Super Admin account created successfully` → ✅ Admin seeded
-   - `Schema ask_db is up to date` → ✅ Flyway migrations ran
-4. If you see errors, the logs tell you exactly what's wrong
-
----
-
-## 6. Deploy the Frontend (Vercel)
-
-### Step 1: Log in to Vercel
-
-1. Go to https://vercel.com
-2. Click **"Add New Project"**
-3. Connect your GitHub account
-4. Select your `APNA_SK` repository
-
-### Step 2: Configure the Build
-
-| Setting | Value |
-|---------|-------|
-| **Framework Preset** | Vite |
-| **Root Directory** | `frontend` |
-| **Build Command** | `bun run build` (or `npm run build`) |
-| **Output Directory** | `dist` |
-
-### Step 3: Set the Environment Variable
-
-Add this environment variable:
-
-| Variable | Value |
-|----------|-------|
-| `VITE_API_BASE_URL` | `https://YOUR-BACKEND.up.railway.app/api` |
-
-Replace `YOUR-BACKEND` with your actual Railway backend URL from Step 5.5 above.
-
-### Step 4: Deploy
-
-1. Click **"Deploy"**
-2. Vercel builds and deploys in under 1 minute
-3. You get a live URL like: `https://ask-erp.vercel.app`
-
-### Step 5: Verify Frontend is Live
-
-Open the Vercel URL in your browser. You should see the ASK login page.
-
----
-
-## 7. Connect Everything
-
-### 7.1 Update Backend CORS with Frontend URL
-
-Now that you have your Vercel URL, go back to Railway:
-
-1. Click on your backend service → **"Variables"** tab
-2. Update `CORS_ALLOWED_ORIGINS` to your Vercel URL:
-   ```
-   https://ask-erp.vercel.app
-   ```
-   If you have multiple domains (e.g., custom domain too), separate with commas:
-   ```
-   https://ask-erp.vercel.app,https://app.askhealth.in
-   ```
-3. Railway will automatically redeploy with the new variable
-
-### 7.2 Test the Connection
-
-1. Open your Vercel URL in a browser
-2. Open browser DevTools → Network tab
-3. Try logging in with your Super Admin credentials
-4. Check that the login request goes to your Railway backend URL
-5. If you see CORS errors, double-check the `CORS_ALLOWED_ORIGINS` variable
-
-### 7.3 Verify API Communication
-
-Login should work end-to-end:
-1. Enter Super Admin email and password
-2. If 2FA is enabled, check your email for OTP
-3. Enter OTP → redirected to dashboard
-4. Dashboard loads stats from the backend API
-
-If the login works, **frontend ↔ backend ↔ database** are all connected. 🎉
-
----
-
-## 8. Custom Domain (Optional)
-
-### 8.1 Buy a Domain
-
-1. Go to https://namecheap.com
-2. Search for your domain (e.g., `askhealth.in`)
-3. Purchase it (`.in` domains start at ₹199/year)
-
-### 8.2 Connect Domain to Frontend (Vercel)
-
-1. In Vercel, go to your project → **"Settings"** → **"Domains"**
-2. Click **"Add Domain"**
-3. Enter your domain: `app.askhealth.in`
-4. Vercel shows you DNS records to add. Go to your domain registrar:
-
-| Type | Name | Value |
-|------|------|-------|
-| CNAME | `app` | `cname.vercel-dns.com` |
-
-5. Wait 5-10 minutes for DNS propagation
-6. Vercel automatically provisions an SSL certificate (HTTPS)
-
-### 8.3 Connect Domain to Backend (Railway)
-
-1. In Railway, go to backend service → **"Settings"** → **"Networking"**
-2. Click **"Custom Domain"**
-3. Enter: `api.askhealth.in`
-4. Add this DNS record at your registrar:
-
-| Type | Name | Value |
-|------|------|-------|
-| CNAME | `api` | Your Railway domain (e.g., `ask-production-backend.up.railway.app`) |
-
-5. Wait for DNS propagation
-
-### 8.4 Update Environment Variables
-
-After custom domains are live, update these:
-
-**Railway (Backend):**
-```
-CORS_ALLOWED_ORIGINS=https://app.askhealth.in,https://ask-erp.vercel.app
-```
-
-**Vercel (Frontend):**
-```
-VITE_API_BASE_URL=https://api.askhealth.in/api
-```
-
-Redeploy both after updating.
-
----
-
-## 9. Verify Deployment Checklist
-
-After everything is deployed, go through this checklist:
-
-| # | Check | How to Test | Expected Result |
-|---|-------|-------------|-----------------|
-| 1 | Frontend loads | Open Vercel URL in browser | Login page appears |
-| 2 | Login works | Enter Super Admin credentials | Redirected to OTP or dashboard |
-| 3 | 2FA works | Enter OTP from email | Redirected to dashboard |
-| 4 | Dashboard loads data | Check stat cards on dashboard | Numbers appear (states, stores, etc.) |
-| 5 | API calls reach backend | Browser DevTools → Network tab | Requests go to Railway URL, return 200 |
-| 6 | Database works | Create a new user from the dashboard | User appears in the user list |
-| 7 | Emails send | Login to trigger OTP email | OTP email arrives in your inbox |
-| 8 | No CORS errors | Browser DevTools → Console tab | No red CORS error messages |
-| 9 | HTTPS works | Check the padlock icon in browser | Green padlock on both frontend and backend URLs |
-| 10 | Mobile works | Open Vercel URL on your phone | Login page loads and is responsive |
-
----
-
-## 10. Common Deployment Errors and Fixes
-
-### ❌ `Build failed` on Railway
-
-**Cause:** Maven can't build the project.  
-**Fix:** Make sure `Root Directory` is set to `backend` in Railway settings. Run `mvn clean package -DskipTests` locally to verify it builds.
-
----
-
-### ❌ `Communications link failure` or `Unable to connect to database`
-
-**Cause:** Backend can't reach the MySQL database.  
-**Fix:** Double-check `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` in Railway variables. Make sure you're using the Railway MySQL host/port, not `localhost:3306`.
-
----
-
-### ❌ `CORS error: No 'Access-Control-Allow-Origin' header`
-
-**Cause:** Backend is rejecting requests from the frontend domain.  
-**Fix:** Check `CORS_ALLOWED_ORIGINS` in Railway variables. It must exactly match your frontend URL including `https://`. No trailing slash.
-
-```
-✅ https://ask-erp.vercel.app
-❌ https://ask-erp.vercel.app/
-❌ http://ask-erp.vercel.app
+## Architecture Overview
+
+```mermaid
+graph LR
+    User[Web Browser] -->|Accesses Frontend| Vercel[Vercel (React Frontend)]
+    Vercel -->|API Requests| Render[Render (Spring Boot Backend)]
+    Render -->|Queries| CleverCloud[Clever Cloud (MySQL Database)]
+    UptimeRobot[UptimeRobot Pinger] -->|Ping health check every 14m| Render
 ```
 
 ---
 
-### ❌ `404 Not Found` when refreshing a page on Vercel
+## 1. Setting Up the Database on Clever Cloud
 
-**Cause:** React Router uses client-side routing. Vercel doesn't know about your routes.  
-**Fix:** Create `frontend/vercel.json`:
+[Clever Cloud](https://www.clever-cloud.com/) offers a free-tier MySQL database with 10MB of storage and up to 5 concurrent connections, which is perfect for this application.
 
-```json
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
-
-Commit and push — Vercel will auto-redeploy.
-
----
-
-### ❌ `Could not resolve placeholder 'JWT_SECRET'`
-
-**Cause:** Environment variables are not set in Railway.  
-**Fix:** Go to Railway → your backend service → Variables tab → add all missing variables from section 5.3 above.
+### Step-by-Step Setup:
+1. **Create an Account**: Go to [Clever Cloud Sign Up](https://console.clever-cloud.com/signup) and create a free account.
+2. **Access the Console**: Once logged in, go to the console and click **"Create..."** at the top right of the dashboard, then select **"An add-on"**.
+3. **Choose MySQL**: Search for **MySQL** in the add-on catalog, select it, and click **"Next"**.
+4. **Select Free Plan**: Choose the **"Shared / Free"** plan (also named **"Free addon"**).
+5. **Name the Add-on**: Name your database (e.g., `ask-production-db`), select a region closest to your target audience (e.g., Paris or Montreal), and click **"Next"**.
+6. **Skip Application Linking**: Clever Cloud will ask if you want to link the database to a Clever Cloud application. Click **"Skip"** (we are hosting the backend on Render).
+7. **Copy Credentials**: Once created, click on your MySQL add-on in the console to view its credentials. Copy the following details:
+   - **Host** (e.g., `u823908492-mysql.services.clever-cloud.com`)
+   - **Database Name / Schema Name** (e.g., `bq83478jdfh`)
+   - **User** (e.g., `ugr83478dfh`)
+   - **Password** (e.g., `hsd83472hsdkhfsdkj`)
+   - **Port** (typically `3306`)
 
 ---
 
-### ❌ `Flyway migration checksum mismatch`
+## 2. Deploying the Backend on Render
 
-**Cause:** A migration file was modified after it already ran.  
-**Fix:** In the Railway MySQL instance, connect via the provided connection string and run:
+[Render](https://render.com/) is a cloud hosting platform that supports Java applications natively.
 
-```sql
-DELETE FROM flyway_schema_history WHERE success = 0;
-```
+### Step-by-Step Setup:
+1. **Create an Account**: Go to [Render](https://render.com/) and sign up. Linking your GitHub account is recommended.
+2. **Create Web Service**: On the Render dashboard, click **"New +"** and select **"Web Service"**.
+3. **Connect GitHub Repository**: Select your repository `APNA_SK` from the list of Git repositories. (If you don't see it, grant Render access to your GitHub account).
+4. **Configure Web Service**:
+   - **Name**: `ask-backend`
+   - **Region**: Select a region (e.g., `Singapore` or `Oregon` — ideally close to your users).
+   - **Branch**: `main`
+   - **Root Directory**: `backend` (This is critical! The Spring Boot project sits inside the `/backend` folder).
+   - **Runtime**: `Java`
+   - **Instance Type**: `Free`
+5. **Build and Start Commands**:
+   - **Build Command**: `mvn clean package -DskipTests`
+   - **Start Command**: `java -jar target/apna-swasthya-kendra-1.0.0.jar`
+6. **Environment Variables**: Click **"Advanced"** and add the following environment variables (cloning your `.env.example` setup):
 
-Then redeploy the backend.
+| Variable Name | Description | Value |
+|---|---|---|
+| `DB_URL` | The JDBC MySQL connection URL pointing to Clever Cloud. | `jdbc:mysql://YOUR_CLEVER_CLOUD_HOST:3306/YOUR_CLEVER_CLOUD_DB_NAME?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata` |
+| `DB_USERNAME` | Username for your Clever Cloud MySQL database. | *Use the Clever Cloud User string copied earlier* |
+| `DB_PASSWORD` | Password for your Clever Cloud MySQL database. | *Use the Clever Cloud Password string copied earlier* |
+| `JWT_SECRET` | Secret key used for signing JWT login tokens. | *A long random alphanumeric string (minimum 64 characters)* |
+| `AES_SECRET_KEY` | Secret key used to encrypt sensitive patient bank details. | *A random alphanumeric string of **exactly 32 characters*** |
+| `BREVO_API_KEY` | HTTPS API key from Brevo to send OTPs/emails. | *Your Brevo SMTP/API token (e.g. `xkeysib-...`)* |
+| `BREVO_SENDER_EMAIL` | The verified email from your Brevo dashboard. | *e.g., `otp@yourdomain.com`* |
+| `BREVO_SENDER_NAME` | Display name showing on sent emails. | `Apna Swasthya Kendra` |
+| `SUPER_ADMIN_EMAIL` | Default login email for Super Admin created on startup. | *e.g., `admin@apnask.com`* |
+| `SUPER_ADMIN_PASSWORD` | Default login password for the Super Admin. | *Choose a strong password (minimum 8 characters)* |
+| `CORS_ALLOWED_ORIGINS` | CORS origins that can query this backend. | `http://localhost:5173` *(We will update this to the production frontend URL in Step 4)* |
 
----
-
-### ❌ Emails not sending (OTP not received)
-
-**Cause:** Gmail is blocking the SMTP connection.  
-**Fix:**
-1. Make sure you're using a Gmail **App Password**, not your regular password
-2. Make sure `MAIL_HOST` is `smtp.gmail.com` and `MAIL_PORT` is `587`
-3. Check Railway logs for the exact email error
-
----
-
-### ❌ Frontend shows `Network Error` on all API calls
-
-**Cause:** `VITE_API_BASE_URL` is wrong or backend is down.  
-**Fix:**
-1. Check if backend is running: visit `https://YOUR-BACKEND.up.railway.app/api/v1/auth/login` — you should get a 405 Method Not Allowed (not a connection error)
-2. Verify `VITE_API_BASE_URL` in Vercel includes `/api` at the end
-3. **Important:** After changing a `VITE_` variable, you must redeploy on Vercel (Vite bakes env vars into the build at build time)
-
----
-
-### ❌ Railway deploy works but app crashes on startup
-
-**Cause:** Java heap memory issue on free tier.  
-**Fix:** Add this environment variable in Railway:
-
-```
-JAVA_OPTS=-Xmx256m -Xms128m
-```
-
-And update your start command to:
-
-```
-java $JAVA_OPTS -jar -Dspring.profiles.active=prod target/apna-swasthya-kendra-1.0.0.jar
-```
+7. **Deploy**: Click **"Create Web Service"**.
+8. **Verify Backend**:
+   - Wait for the build logs to display `Started AskApplication in ... seconds`.
+   - Copy the public URL generated by Render (e.g., `https://ask-backend.onrender.com`).
+   - Append `/api/actuator/health` to the URL and open it in your browser (e.g., `https://ask-backend.onrender.com/api/actuator/health`).
+   - It should return:
+     ```json
+     {"status":"UP"}
+     ```
 
 ---
 
-## 11. After Deployment
+## 3. Deploying the Frontend on Vercel
 
-### View Live Logs
+[Vercel](https://vercel.com/) is a serverless frontend platform that auto-detects Vite configurations.
 
-**Backend logs (Railway):**
-1. Go to https://railway.com → your project → backend service
-2. Click the **"Logs"** tab
-3. Logs stream in real-time
+### Step-by-Step Setup:
+1. **Create an Account**: Go to [Vercel](https://vercel.com/) and sign up using your GitHub account.
+2. **Import Repository**: Click **"Add New"** → **"Project"** and import your `APNA_SK` repository.
+3. **Configure Project**:
+   - **Project Name**: `ask-frontend`
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: Click "Edit" and choose the **`frontend`** directory.
+4. **Environment Variables**: Expand the "Environment Variables" section and add:
 
-### Redeploy When Code is Updated
+| Name | Value |
+|---|---|
+| `VITE_API_BASE_URL` | The URL of your Render backend with the `/api` prefix (e.g., `https://ask-backend.onrender.com/api`). |
 
-**Both Railway and Vercel auto-deploy when you push to GitHub:**
-
-```bash
-git add .
-git commit -m "Fix: description of change"
-git push origin main
-```
-
-Railway rebuilds the backend automatically (takes ~2-3 minutes).  
-Vercel rebuilds the frontend automatically (takes ~30 seconds).
-
-### Take a Database Backup
-
-**Option 1 — From Railway UI:**
-1. Click on your MySQL service in Railway
-2. Go to **"Data"** tab
-3. Use the query editor to export data
-
-**Option 2 — Using mysqldump from your local machine:**
-
-```bash
-mysqldump -h RAILWAY_HOST -P RAILWAY_PORT -u root -pRAILWAY_PASSWORD railway > backup_$(date +%Y%m%d).sql
-```
-
-Replace `RAILWAY_HOST`, `RAILWAY_PORT`, and `RAILWAY_PASSWORD` with values from your Railway MySQL Variables tab.
-
-### Monitor If the Server Goes Down
-
-**Free uptime monitoring with UptimeRobot:**
-
-1. Go to https://uptimerobot.com and create a free account
-2. Click **"Add New Monitor"**
-3. Set:
-   - **Monitor Type:** HTTP(s)
-   - **Friendly Name:** ASK Backend
-   - **URL:** `https://YOUR-BACKEND.up.railway.app/api/actuator/health`
-   - **Monitoring Interval:** 5 minutes
-4. Add your email for alerts
-5. Repeat for the frontend URL
-
-You will get an email notification within 5 minutes if either server goes down.
+5. **Deploy**: Click **"Deploy"**.
+6. **Verify Frontend**:
+   - Vercel will build the frontend assets using the root build commands automatically.
+   - Once completed, click the generated deployment URL (e.g., `https://ask-frontend.vercel.app`).
+   - The ASK ERP login screen should display successfully.
 
 ---
 
-## Quick Reference Card
+## 4. Connecting Everything Together
 
-Once deployed, bookmark these URLs:
+Now that both the frontend and backend are live, they need to authorize each other.
 
-| What | URL |
-|------|-----|
-| **Frontend (live app)** | `https://ask-erp.vercel.app` |
-| **Backend API** | `https://YOUR-BACKEND.up.railway.app/api` |
-| **Railway Dashboard** | `https://railway.com/dashboard` |
-| **Vercel Dashboard** | `https://vercel.com/dashboard` |
-| **Backend Logs** | Railway → Project → Backend → Logs tab |
-| **Database Admin** | Railway → Project → MySQL → Data tab |
+### Step 1: Update CORS Allowed Origins on Render
+1. Go to your [Render Dashboard](https://dashboard.render.com/) and select your backend Web Service (`ask-backend`).
+2. Go to the **"Environment"** tab on the left sidebar.
+3. Find the `CORS_ALLOWED_ORIGINS` environment variable.
+4. Change its value from `http://localhost:5173` to your production Vercel URL:
+   - Value: `https://ask-frontend.vercel.app` (do **not** add a trailing slash).
+5. Click **"Save Changes"**. Render will trigger an automatic redeployment to apply this environment variable.
+
+### Step 2: Update API Base URL on Vercel
+1. Go to your [Vercel Dashboard](https://vercel.com/) and select your frontend project (`ask-frontend`).
+2. Go to the **"Settings"** tab, then select **"Environment Variables"** in the sidebar.
+3. Find the `VITE_API_BASE_URL` variable.
+4. Verify it points to the exact Render backend API URL (e.g., `https://ask-backend.onrender.com/api`).
+5. If you changed it, redeploy your latest deployment to rebuild Vite with the updated endpoint:
+   - Go to **"Deployments"** → Click the three dots next to the top deployment → Select **"Redeploy"**.
+
+### Step 3: End-to-End Test
+1. Go to your live Vercel frontend URL.
+2. Log in using the `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` credentials you set up in Render.
+3. The application should successfully log you in and show the dashboard without any console CORS errors.
 
 ---
 
-**Congratulations!** Your Apna Swasthya Kendra ERP is now live on the internet. 🚀
+## 5. Keeping the Backend Always On with UptimeRobot
+
+Render's Free instance type spins down (goes to sleep) if it receives no inbound traffic for 15 consecutive minutes. The next user request then suffers a 50-second startup delay. We can prevent this sleep behavior using UptimeRobot.
+
+### Step-by-Step Setup:
+1. **Create an Account**: Go to [UptimeRobot](https://uptimerobot.com/) and sign up for a free account.
+2. **Add Monitor**: From the dashboard, click **"Add New Monitor"**.
+3. **Configure Monitor**:
+   - **Monitor Type**: `HTTPS`
+   - **Friendly Name**: `ASK Backend Pinger`
+   - **URL (or IP)**: Enter your backend health check endpoint (e.g., `https://ask-backend.onrender.com/api/actuator/health`).
+   - **Monitoring Interval**: Set to **`Every 14 minutes`** (This ensures a ping reaches Render right before the 15-minute inactivity timeout).
+4. **Save**: Click **"Create Monitor"** (and confirm again).
+5. **Result**: UptimeRobot will hit your backend health endpoint every 14 minutes, keeping the Render free container active 24/7.
+
+---
+
+## 6. Custom Domain Setup (Optional)
+
+Using a custom domain like `apnask.com` gives your app a premium feel.
+
+### Step 1: Connect Domain to Vercel (Frontend)
+1. Go to your Vercel project dashboard → **"Settings"** → **"Domains"**.
+2. Add your custom domain:
+   - To host at apex (e.g., `apnask.com`), enter `apnask.com`. Vercel will recommend redirecting `www.apnask.com` to it.
+3. In your Domain Registrar (Namecheap, GoDaddy, etc.), add the following DNS records:
+   - **A Record** (for apex `apnask.com`):
+     - Host: `@`
+     - Value: `76.76.21.21`
+   - **CNAME Record** (for subdomain `www.apnask.com`):
+     - Host: `www`
+     - Value: `cname.vercel-dns.com`
+
+### Step 2: Connect Subdomain to Render (Backend)
+1. Go to your Render backend web service dashboard → **"Settings"** → scroll down to **"Custom Domains"**.
+2. Click **"Add Custom Domain"** and enter your desired subdomain (e.g., `api.apnask.com`).
+3. In your Domain Registrar DNS settings, add the CNAME record:
+   - **CNAME Record** (for subdomain `api.apnask.com`):
+     - Host: `api`
+     - Value: `ask-backend.onrender.com` (your Render domain name)
+
+### Step 3: Update Environment Variables for Custom Domain
+1. **On Render (Backend)**:
+   - Go to your Render service -> **"Environment"**.
+   - Update `CORS_ALLOWED_ORIGINS` to include your new custom domains:
+     - Value: `https://apnask.com,https://www.apnask.com`
+   - Save changes.
+2. **On Vercel (Frontend)**:
+   - Go to your Vercel project -> **"Settings"** -> **"Environment Variables"**.
+   - Update `VITE_API_BASE_URL` to point to the new custom backend subdomain:
+     - Value: `https://api.apnask.com/api`
+   - Redeploy the frontend from the Vercel Deployments tab to compile the new base URL.
+3. Test your live application by visiting `https://apnask.com`.
