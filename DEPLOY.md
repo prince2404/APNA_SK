@@ -8,10 +8,10 @@ This guide takes you through the step-by-step process of deploying the complete 
 
 ```mermaid
 graph LR
-    User[Web Browser] -->|Accesses Frontend| Vercel[Vercel (React Frontend)]
-    Vercel -->|API Requests| Render[Render (Spring Boot Backend)]
-    Render -->|Queries| CleverCloud[Clever Cloud (MySQL Database)]
-    UptimeRobot[UptimeRobot Pinger] -->|Ping health check every 14m| Render
+    User["Web Browser"] -->|Accesses Frontend| Vercel["Vercel (React Frontend)"]
+    Vercel -->|API Requests| Render["Render (Spring Boot Backend)"]
+    Render -->|Queries| CleverCloud["Clever Cloud (MySQL Database)"]
+    UptimeRobot["UptimeRobot Pinger"] -->|Ping health check every 14m| Render
 ```
 
 ---
