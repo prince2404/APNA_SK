@@ -1,189 +1,172 @@
 # Production Deployment Guide — Apna Swasthya Kendra (ASK)
 
-This guide takes you through the step-by-step process of deploying the complete ASK application (Frontend, Backend, and Database) to production using free-tier services. 
+This guide takes you through deploying the ASK application (Frontend, Backend, and Database) to production using **free-forever** hosting tiers.
 
----
-
-## Architecture Overview
-
-```mermaid
-graph LR
-    User["Web Browser"] -->|Accesses Frontend| Vercel["Vercel (React Frontend)"]
-    Vercel -->|API Requests| Render["Render (Spring Boot Backend)"]
-    Render -->|Queries| CleverCloud["Clever Cloud (MySQL Database)"]
-    UptimeRobot["UptimeRobot Pinger"] -->|Ping health check every 14m| Render
-```
+To avoid any billing, we will use platforms that do **not** expire after a trial period:
+- **Database** → **Clever Cloud (MySQL)** (Free forever, stays active, no credit card required)
+- **Backend Option A (Recommended - Always On)** → **Koyeb** (Free forever, does **not** go to sleep, reads the project's `Dockerfile` automatically)
+- **Backend Option B (Alternative)** → **Render** (Free forever, goes to sleep after 15 minutes of inactivity unless kept awake, reads the project's `Dockerfile` automatically)
+- **Frontend** → **Vercel** (Free forever for personal projects, instant edge network)
 
 ---
 
 ## 1. Setting Up the Database on Clever Cloud
 
-[Clever Cloud](https://www.clever-cloud.com/) offers a free-tier MySQL database with 10MB of storage and up to 5 concurrent connections, which is perfect for this application.
+Clever Cloud offers a free MySQL database with 10MB of storage, which is plenty for the system's metadata.
 
 ### Step-by-Step Setup:
-1. **Create an Account**: Go to [Clever Cloud Sign Up](https://console.clever-cloud.com/signup) and create a free account.
-2. **Access the Console**: Once logged in, go to the console and click **"Create..."** at the top right of the dashboard, then select **"An add-on"**.
-3. **Choose MySQL**: Search for **MySQL** in the add-on catalog, select it, and click **"Next"**.
-4. **Select Free Plan**: Choose the **"Shared / Free"** plan (also named **"Free addon"**).
-5. **Name the Add-on**: Name your database (e.g., `ask-production-db`), select a region closest to your target audience (e.g., Paris or Montreal), and click **"Next"**.
-6. **Skip Application Linking**: Clever Cloud will ask if you want to link the database to a Clever Cloud application. Click **"Skip"** (we are hosting the backend on Render).
-7. **Copy Credentials**: Once created, click on your MySQL add-on in the console to view its credentials. Copy the following details:
-   - **Host** (e.g., `u823908492-mysql.services.clever-cloud.com`)
-   - **Database Name / Schema Name** (e.g., `bq83478jdfh`)
-   - **User** (e.g., `ugr83478dfh`)
-   - **Password** (e.g., `hsd83472hsdkhfsdkj`)
-   - **Port** (typically `3306`)
+1. **Sign Up**: Go to the [Clever Cloud Signup Page](https://console.clever-cloud.com/signup) and create a free account.
+2. **Create Add-on**: On the dashboard, click **"Create..."** at the top right and select **"An add-on"**.
+3. **Choose MySQL**: Search for **MySQL**, select it, and click **"Next"**.
+4. **Choose Free Plan**: Select the **"Shared / Free"** plan and click **"Next"**.
+5. **Name the Add-on**: Name your database (e.g., `ask-db`), select a region (e.g., Paris or Montreal), and click **"Next"**.
+6. **Skip Link**: When asked to link the add-on to an application, click **"Skip"**.
+7. **Copy Credentials**: Click on your newly created MySQL add-on in the console to view its credentials. Copy these details:
+   - **Host** (e.g., `ubq1234...-mysql.services.clever-cloud.com`)
+   - **Database Name / Schema Name** (e.g., `bq87654...`)
+   - **User** (e.g., `u87654...`)
+   - **Password** (e.g., `hfs7364...`)
+   - **Port** (e.g., `3306`)
 
 ---
 
-## 2. Deploying the Backend on Render
+## 2. Deploying the Backend
 
-[Render](https://render.com/) is a cloud hosting platform that supports Java applications natively.
+Because our repository already contains a `backend/Dockerfile` configured to compile and run Spring Boot under Java 21, both Koyeb and Render will **automatically detect it**. 
 
-### Step-by-Step Setup:
-1. **Create an Account**: Go to [Render](https://render.com/) and sign up. Linking your GitHub account is recommended.
-2. **Create Web Service**: On the Render dashboard, click **"New +"** and select **"Web Service"**.
-3. **Connect GitHub Repository**: Select your repository `APNA_SK` from the list of Git repositories. (If you don't see it, grant Render access to your GitHub account).
-4. **Configure Web Service**:
-   - **Name**: `ask-backend`
-   - **Region**: Select a region (e.g., `Singapore` or `Oregon` — ideally close to your users).
-   - **Branch**: `main`
-   - **Root Directory**: `backend` (This is critical! The Spring Boot project sits inside the `/backend` folder).
-   - **Runtime**: `Java`
-   - **Instance Type**: `Free`
-5. **Build and Start Commands**:
-   - **Build Command**: `mvn clean package -DskipTests`
-   - **Start Command**: `java -jar target/apna-swasthya-kendra-1.0.0.jar`
-6. **Environment Variables**: Click **"Advanced"** and add the following environment variables (cloning your `.env.example` setup):
+> [!NOTE]
+> **Why didn't "Build Command" or "Start Command" show up?**
+> When a hosting platform detects a `Dockerfile` in your repository (or you choose the **Docker** runtime), it hides the build and start command options. The hosting service builds the container directly from the instructions inside the `Dockerfile`, meaning you do **not** have to configure any build or start commands manually.
 
-| Variable Name | Description | Value |
+---
+
+### Option A: Deploying on Koyeb (Recommended — Always On)
+
+Koyeb's free tier runs 24/7 and **does not go to sleep** after periods of inactivity, meaning you do not experience Render's 50-second cold-start delays and do not need a pinging service like UptimeRobot.
+
+1. **Sign Up**: Go to [Koyeb](https://www.koyeb.com/) and create a free account.
+2. **Create App**: Click **"Create Service"**.
+3. **Connect GitHub**: Choose **GitHub** as the deployment method, select your `APNA_SK` repository, and click **"Select"**.
+4. **Configure Service**:
+   - **Builder**: Select **"Dockerfile"** (Koyeb will automatically find the Dockerfile in the directory we specify).
+   - **Root Directory**: Set to **`/backend`** (This tells Koyeb to execute the Dockerfile inside the backend folder).
+   - **Instance Size**: Select **"Nano"** (Free tier: 512MB RAM, 0.1 vCPU — perfect for Spring Boot).
+   - **Service Type**: Select **"Web Service"**.
+   - **Ports**: Set port to **`8080`** and path to **`/`**.
+5. **Environment Variables**: Add the variables from your `.env.example`:
+
+| Name | Value | Description |
 |---|---|---|
-| `DB_URL` | The JDBC MySQL connection URL pointing to Clever Cloud. | `jdbc:mysql://YOUR_CLEVER_CLOUD_HOST:3306/YOUR_CLEVER_CLOUD_DB_NAME?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata` |
-| `DB_USERNAME` | Username for your Clever Cloud MySQL database. | *Use the Clever Cloud User string copied earlier* |
-| `DB_PASSWORD` | Password for your Clever Cloud MySQL database. | *Use the Clever Cloud Password string copied earlier* |
-| `JWT_SECRET` | Secret key used for signing JWT login tokens. | *A long random alphanumeric string (minimum 64 characters)* |
-| `AES_SECRET_KEY` | Secret key used to encrypt sensitive patient bank details. | *A random alphanumeric string of **exactly 32 characters*** |
-| `BREVO_API_KEY` | HTTPS API key from Brevo to send OTPs/emails. | *Your Brevo SMTP/API token (e.g. `xkeysib-...`)* |
-| `BREVO_SENDER_EMAIL` | The verified email from your Brevo dashboard. | *e.g., `otp@yourdomain.com`* |
-| `BREVO_SENDER_NAME` | Display name showing on sent emails. | `Apna Swasthya Kendra` |
-| `SUPER_ADMIN_EMAIL` | Default login email for Super Admin created on startup. | *e.g., `admin@apnask.com`* |
-| `SUPER_ADMIN_PASSWORD` | Default login password for the Super Admin. | *Choose a strong password (minimum 8 characters)* |
-| `CORS_ALLOWED_ORIGINS` | CORS origins that can query this backend. | `http://localhost:5173` *(We will update this to the production frontend URL in Step 4)* |
+| `DB_URL` | `jdbc:mysql://YOUR_CLEVER_HOST:3306/YOUR_CLEVER_DB?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata` | Connection string for Clever Cloud MySQL database. |
+| `DB_USERNAME` | *Your Clever Cloud User string* | MySQL user from Clever Cloud credentials page. |
+| `DB_PASSWORD` | *Your Clever Cloud Password string* | MySQL password from Clever Cloud credentials page. |
+| `JWT_SECRET` | *A random string of 64+ characters* | Secret key for signing JWT login tokens. |
+| `AES_SECRET_KEY` | *A random string of **exactly 32 characters*** | Key for encrypting sensitive bank info. |
+| `BREVO_API_KEY` | *Your Brevo API Key* | API key for Brevo HTTPS email service. |
+| `BREVO_SENDER_EMAIL`| *Your Brevo sender email* | Verified email address used to send OTP notifications. |
+| `BREVO_SENDER_NAME` | `Apna Swasthya Kendra` | Email display sender name. |
+| `SUPER_ADMIN_EMAIL` | *e.g., `admin@yourdomain.com`* | Default email for first-time login. |
+| `SUPER_ADMIN_PASSWORD`| *Choose a strong password* | Default password for first-time login. |
+| `CORS_ALLOWED_ORIGINS`| `http://localhost:5173` | *We will update this to the Vercel frontend URL in Step 4* |
 
-7. **Deploy**: Click **"Create Web Service"**.
-8. **Verify Backend**:
-   - Wait for the build logs to display `Started AskApplication in ... seconds`.
-   - Copy the public URL generated by Render (e.g., `https://ask-backend.onrender.com`).
-   - Append `/api/actuator/health` to the URL and open it in your browser (e.g., `https://ask-backend.onrender.com/api/actuator/health`).
-   - It should return:
-     ```json
-     {"status":"UP"}
-     ```
+6. **Deploy**: Click **"Deploy"**. Koyeb will compile the Docker image and deploy it.
+7. **Verify**: Copy the public URL generated by Koyeb (e.g., `https://ask-backend-xxxx.koyeb.app`) and append `/api/actuator/health` to verify the JSON output returns `{"status":"UP"}`.
+
+---
+
+### Option B: Deploying on Render (Alternative)
+
+If you prefer Render, you can deploy it using the **Docker** runtime:
+
+1. **Sign Up**: Go to [Render](https://render.com/) and create a free account.
+2. **Create Service**: Click **"New +"** → **"Web Service"**.
+3. **Connect GitHub**: Select your `APNA_SK` repository.
+4. **Configure Service**:
+   - **Name**: `ask-backend`
+   - **Region**: Choose a region closest to your users.
+   - **Branch**: `main`
+   - **Root Directory**: **`backend`**
+   - **Runtime**: **`Docker`** (Render will detect the `Dockerfile` in the root directory. Build and Start Commands will disappear).
+   - **Instance Type**: `Free`
+5. **Environment Variables**: Click **"Advanced"** and add all environment variables listed in the Koyeb table above.
+6. **Deploy**: Click **"Create Web Service"**.
+7. **Verify**: Copy your Render public URL (e.g., `https://ask-backend.onrender.com`) and visit `https://ask-backend.onrender.com/api/actuator/health` to confirm it returns `{"status":"UP"}`.
 
 ---
 
 ## 3. Deploying the Frontend on Vercel
 
-[Vercel](https://vercel.com/) is a serverless frontend platform that auto-detects Vite configurations.
+Vercel hosts the React frontend build output for free forever.
 
 ### Step-by-Step Setup:
-1. **Create an Account**: Go to [Vercel](https://vercel.com/) and sign up using your GitHub account.
-2. **Import Repository**: Click **"Add New"** → **"Project"** and import your `APNA_SK` repository.
+1. **Sign Up**: Go to [Vercel](https://vercel.com/) and sign up with your GitHub account.
+2. **Import Project**: Click **"Add New"** → **"Project"** and import your `APNA_SK` repository.
 3. **Configure Project**:
    - **Project Name**: `ask-frontend`
    - **Framework Preset**: `Vite`
-   - **Root Directory**: Click "Edit" and choose the **`frontend`** directory.
-4. **Environment Variables**: Expand the "Environment Variables" section and add:
+   - **Root Directory**: Click "Edit" and choose the **`frontend`** folder.
+4. **Environment Variables**: Add this variable:
 
 | Name | Value |
 |---|---|
-| `VITE_API_BASE_URL` | The URL of your Render backend with the `/api` prefix (e.g., `https://ask-backend.onrender.com/api`). |
+| `VITE_API_BASE_URL` | The URL of your live backend with the `/api` prefix (e.g., `https://ask-backend-xxxx.koyeb.app/api` or `https://ask-backend.onrender.com/api`). |
 
-5. **Deploy**: Click **"Deploy"**.
-6. **Verify Frontend**:
-   - Vercel will build the frontend assets using the root build commands automatically.
-   - Once completed, click the generated deployment URL (e.g., `https://ask-frontend.vercel.app`).
-   - The ASK ERP login screen should display successfully.
+5. **Deploy**: Click **"Deploy"**. Vercel will compile the assets and provide a live URL (e.g., `https://ask-frontend.vercel.app`).
 
 ---
 
 ## 4. Connecting Everything Together
 
-Now that both the frontend and backend are live, they need to authorize each other.
-
-### Step 1: Update CORS Allowed Origins on Render
-1. Go to your [Render Dashboard](https://dashboard.render.com/) and select your backend Web Service (`ask-backend`).
-2. Go to the **"Environment"** tab on the left sidebar.
-3. Find the `CORS_ALLOWED_ORIGINS` environment variable.
-4. Change its value from `http://localhost:5173` to your production Vercel URL:
+### Step 1: Update CORS on Backend
+1. Go to your backend service dashboard (Koyeb or Render).
+2. Go to the environment variables settings.
+3. Locate `CORS_ALLOWED_ORIGINS` and update its value to your Vercel frontend URL:
    - Value: `https://ask-frontend.vercel.app` (do **not** add a trailing slash).
-5. Click **"Save Changes"**. Render will trigger an automatic redeployment to apply this environment variable.
+4. Save the changes. The service will redeploy.
 
-### Step 2: Update API Base URL on Vercel
-1. Go to your [Vercel Dashboard](https://vercel.com/) and select your frontend project (`ask-frontend`).
-2. Go to the **"Settings"** tab, then select **"Environment Variables"** in the sidebar.
-3. Find the `VITE_API_BASE_URL` variable.
-4. Verify it points to the exact Render backend API URL (e.g., `https://ask-backend.onrender.com/api`).
-5. If you changed it, redeploy your latest deployment to rebuild Vite with the updated endpoint:
-   - Go to **"Deployments"** → Click the three dots next to the top deployment → Select **"Redeploy"**.
+### Step 2: Update Vercel API Base URL
+1. Go to Vercel → select your project → **"Settings"** → **"Environment Variables"**.
+2. Make sure `VITE_API_BASE_URL` matches your backend URL suffix (e.g., `https://ask-backend-xxxx.koyeb.app/api`).
+3. If updated, go to the **"Deployments"** tab, click the three dots next to the top deployment, and click **"Redeploy"** to re-compile Vite with the corrected environment variable.
 
-### Step 3: End-to-End Test
-1. Go to your live Vercel frontend URL.
-2. Log in using the `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` credentials you set up in Render.
-3. The application should successfully log you in and show the dashboard without any console CORS errors.
+### Step 3: Test Login
+1. Navigate to your Vercel frontend URL.
+2. Log in using the `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` you set in the backend environment variables.
+3. You should successfully enter the dashboard.
 
 ---
 
-## 5. Keeping the Backend Always On with UptimeRobot
+## 5. Keeping Backend Awake (Only Required for Render)
 
-Render's Free instance type spins down (goes to sleep) if it receives no inbound traffic for 15 consecutive minutes. The next user request then suffers a 50-second startup delay. We can prevent this sleep behavior using UptimeRobot.
+If you deployed the backend on **Render (Option B)**, the Free instance goes to sleep after 15 minutes of inactivity. To prevent this, configure UptimeRobot to ping the service. 
 
-### Step-by-Step Setup:
-1. **Create an Account**: Go to [UptimeRobot](https://uptimerobot.com/) and sign up for a free account.
-2. **Add Monitor**: From the dashboard, click **"Add New Monitor"**.
-3. **Configure Monitor**:
+*(If you deployed on **Koyeb (Option A)**, you can skip this step entirely!)*
+
+1. **Sign Up**: Go to [UptimeRobot](https://uptimerobot.com/) and create a free account.
+2. **Add Monitor**: Click **"Add New Monitor"**.
+3. **Configure**:
    - **Monitor Type**: `HTTPS`
-   - **Friendly Name**: `ASK Backend Pinger`
-   - **URL (or IP)**: Enter your backend health check endpoint (e.g., `https://ask-backend.onrender.com/api/actuator/health`).
-   - **Monitoring Interval**: Set to **`Every 14 minutes`** (This ensures a ping reaches Render right before the 15-minute inactivity timeout).
-4. **Save**: Click **"Create Monitor"** (and confirm again).
-5. **Result**: UptimeRobot will hit your backend health endpoint every 14 minutes, keeping the Render free container active 24/7.
+   - **Friendly Name**: `ASK Backend`
+   - **URL (or IP)**: Your health check endpoint (e.g., `https://ask-backend.onrender.com/api/actuator/health`).
+   - **Monitoring Interval**: Set to **`Every 14 minutes`**.
+4. Click **"Create Monitor"**.
 
 ---
 
 ## 6. Custom Domain Setup (Optional)
 
-Using a custom domain like `apnask.com` gives your app a premium feel.
+### Step 1: Connect Frontend Domain
+1. Go to Vercel project → **"Settings"** → **"Domains"**.
+2. Add your custom domain (e.g., `apnask.com`).
+3. Add the suggested DNS records in your domain registrar panel:
+   - **A Record** (Host: `@`, Value: `76.76.21.21`)
+   - **CNAME Record** (Host: `www`, Value: `cname.vercel-dns.com`)
 
-### Step 1: Connect Domain to Vercel (Frontend)
-1. Go to your Vercel project dashboard → **"Settings"** → **"Domains"**.
-2. Add your custom domain:
-   - To host at apex (e.g., `apnask.com`), enter `apnask.com`. Vercel will recommend redirecting `www.apnask.com` to it.
-3. In your Domain Registrar (Namecheap, GoDaddy, etc.), add the following DNS records:
-   - **A Record** (for apex `apnask.com`):
-     - Host: `@`
-     - Value: `76.76.21.21`
-   - **CNAME Record** (for subdomain `www.apnask.com`):
-     - Host: `www`
-     - Value: `cname.vercel-dns.com`
+### Step 2: Connect Backend Domain
+1. In Koyeb or Render backend dashboard, go to the custom domain settings and add your subdomain (e.g., `api.apnask.com`).
+2. Add the CNAME record in your domain registrar DNS panel:
+   - **CNAME Record** (Host: `api`, Value: `your-backend-koyeb-or-render-domain.app`)
 
-### Step 2: Connect Subdomain to Render (Backend)
-1. Go to your Render backend web service dashboard → **"Settings"** → scroll down to **"Custom Domains"**.
-2. Click **"Add Custom Domain"** and enter your desired subdomain (e.g., `api.apnask.com`).
-3. In your Domain Registrar DNS settings, add the CNAME record:
-   - **CNAME Record** (for subdomain `api.apnask.com`):
-     - Host: `api`
-     - Value: `ask-backend.onrender.com` (your Render domain name)
-
-### Step 3: Update Environment Variables for Custom Domain
-1. **On Render (Backend)**:
-   - Go to your Render service -> **"Environment"**.
-   - Update `CORS_ALLOWED_ORIGINS` to include your new custom domains:
-     - Value: `https://apnask.com,https://www.apnask.com`
-   - Save changes.
-2. **On Vercel (Frontend)**:
-   - Go to your Vercel project -> **"Settings"** -> **"Environment Variables"**.
-   - Update `VITE_API_BASE_URL` to point to the new custom backend subdomain:
-     - Value: `https://api.apnask.com/api`
-   - Redeploy the frontend from the Vercel Deployments tab to compile the new base URL.
-3. Test your live application by visiting `https://apnask.com`.
+### Step 3: Update Domain Environment Variables
+1. **Backend**: Update `CORS_ALLOWED_ORIGINS` to `https://apnask.com,https://www.apnask.com`.
+2. **Frontend**: Update `VITE_API_BASE_URL` to `https://api.apnask.com/api` and trigger a **Redeploy** on Vercel.
