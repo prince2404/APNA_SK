@@ -10,6 +10,23 @@ import { getErrorMessage } from '@/utils/errorUtils';
 import { ROUTES } from '@/constants/routePaths';
 import { ToastContainer } from '@/components/common/ToastContainer';
 
+function PasswordField({ label, field, value, showPassword, onChange, onToggleShow }) {
+  return (
+    <div className="relative">
+      <Input
+        label={label}
+        type={showPassword ? 'text' : 'password'}
+        placeholder="••••••••"
+        value={value}
+        onChange={onChange}
+      />
+      <button type="button" onClick={onToggleShow} className="absolute right-3 top-[38px] p-1 text-surface-400 hover:text-surface-600 cursor-pointer" tabIndex={-1}>
+        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
+
 export default function ChangePasswordPage() {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPasswords, setShowPasswords] = useState({});
@@ -35,21 +52,6 @@ export default function ChangePasswordPage() {
     finally { setLoading(false); }
   };
 
-  const PasswordField = ({ label, field }) => (
-    <div className="relative">
-      <Input
-        label={label}
-        type={showPasswords[field] ? 'text' : 'password'}
-        placeholder="••••••••"
-        value={form[field]}
-        onChange={(e) => updateField(field, e.target.value)}
-      />
-      <button type="button" onClick={() => toggleShow(field)} className="absolute right-3 top-[38px] p-1 text-surface-400 hover:text-surface-600 cursor-pointer" tabIndex={-1}>
-        {showPasswords[field] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-      </button>
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-surface-50">
       <div className="w-full max-w-md">
@@ -65,9 +67,30 @@ export default function ChangePasswordPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <PasswordField label="Current Password" field="currentPassword" />
-            <PasswordField label="New Password" field="newPassword" />
-            <PasswordField label="Confirm New Password" field="confirmPassword" />
+            <PasswordField
+              label="Current Password"
+              field="currentPassword"
+              value={form.currentPassword}
+              showPassword={showPasswords.currentPassword}
+              onChange={(e) => updateField('currentPassword', e.target.value)}
+              onToggleShow={() => toggleShow('currentPassword')}
+            />
+            <PasswordField
+              label="New Password"
+              field="newPassword"
+              value={form.newPassword}
+              showPassword={showPasswords.newPassword}
+              onChange={(e) => updateField('newPassword', e.target.value)}
+              onToggleShow={() => toggleShow('newPassword')}
+            />
+            <PasswordField
+              label="Confirm New Password"
+              field="confirmPassword"
+              value={form.confirmPassword}
+              showPassword={showPasswords.confirmPassword}
+              onChange={(e) => updateField('confirmPassword', e.target.value)}
+              onToggleShow={() => toggleShow('confirmPassword')}
+            />
             <Button type="submit" loading={loading} className="w-full" size="lg">
               Update Password <ArrowRight className="w-4 h-4" />
             </Button>
